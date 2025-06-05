@@ -177,10 +177,10 @@ const App = () => {
             <select
               value={authData.studentLevel}
               onChange={(e) => setAuthData({...authData, studentLevel: e.target.value})}
-              className="w-full p-3 border rounded-lg text-right"
+              className="w-full p-3 border rounded-lg text-right cursor-pointer"
               required
             >
-              <option value="">سطح تحصیلات</option>
+              <option value="" disabled>سطح تحصیلات</option>
               <option value="undergraduate">کارشناسی</option>
               <option value="master">کارشناسی ارشد</option>
               <option value="phd">دکتری</option>
