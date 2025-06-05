@@ -299,15 +299,15 @@ const App = () => {
         {dass21Questions.map((question) => (
           <div key={question.id} className="border-b pb-4">
             <p className="text-right font-medium mb-3">{question.text}</p>
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end space-x-4 space-x-reverse">
               {[
                 { value: 0, label: 'اصلاً' },
                 { value: 1, label: 'گاهی' },
                 { value: 2, label: 'اغلب' },
                 { value: 3, label: 'خیلی زیاد' }
               ].map((option) => (
-                <label key={option.value} className="flex items-center">
-                  <span className="mr-2">{option.label}</span>
+                <label key={option.value} className="flex items-center cursor-pointer">
+                  <span className="mr-2 text-sm">{option.label}</span>
                   <input
                     type="radio"
                     name={`question_${question.id}`}
@@ -317,7 +317,7 @@ const App = () => {
                       ...dassResponses,
                       [question.id]: parseInt(e.target.value)
                     })}
-                    className="mr-1"
+                    className="mr-1 cursor-pointer"
                   />
                 </label>
               ))}
