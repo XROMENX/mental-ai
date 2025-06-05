@@ -147,6 +147,106 @@ class PersianMentalHealthAPITester:
             print("✅ DASS-21 submission successful")
         return success
     
+    def test_submit_phq9(self):
+        """Test submitting PHQ-9 assessment"""
+        # Generate responses for all 9 questions (0-3 scale)
+        responses = {i: i % 4 for i in range(1, 10)}
+        
+        success, data = self.run_test(
+            "Submit PHQ-9",
+            "POST",
+            "api/submit-phq9",
+            200,
+            data={"responses": responses}
+        )
+        if success:
+            # Check that all required fields are in the response
+            required_fields = [
+                "total_score", "severity_level", "analysis", "recommendations"
+            ]
+            for field in required_fields:
+                assert field in data
+            print("✅ PHQ-9 submission successful")
+        return success
+    
+    def test_mood_entry(self):
+        """Test saving mood entry"""
+        mood_data = {
+            "mood_level": 4,  # Good mood
+            "note": "Feeling good today, completed a project"
+        }
+        
+        success, data = self.run_test(
+            "Save Mood Entry",
+            "POST",
+            "api/mood-entry",
+            200,
+            data=mood_data
+        )
+        if success:
+            assert "message" in data
+            print("✅ Mood entry saved successfully")
+        return success
+    
+    def test_get_mood_entries(self):
+        """Test getting mood entries"""
+        success, data = self.run_test(
+            "Get Mood Entries",
+            "GET",
+            "api/mood-entries",
+            200
+        )
+        if success:
+            assert isinstance(data, list)
+            if len(data) > 0:
+                assert "mood_level" in data[0]
+                assert "date" in data[0]
+            print("✅ Mood entries retrieval successful")
+        return success
+    
+    def test_chat_with_bot(self):
+        """Test chatting with the bot"""
+        # Test different types of messages
+        chat_messages = [
+            "سلام",  # Greeting
+            "من امروز خیلی خوشحالم",  # Happy mood
+            "من استرس دارم",  # Stress
+            "من نگران امتحانم هستم",  # Anxiety
+            "من خوب نخوابیدم"  # Sleep issue
+        ]
+        
+        all_success = True
+        for message in chat_messages:
+            success, data = self.run_test(
+                f"Chat Message: '{message}'",
+                "POST",
+                "api/chat",
+                200,
+                data={"message": message}
+            )
+            if success:
+                assert "response" in data
+                print(f"✅ Bot responded to '{message}'")
+            else:
+                all_success = False
+        
+        return all_success
+    
+    def test_get_mental_health_plan(self):
+        """Test getting mental health plan"""
+        success, data = self.run_test(
+            "Get Mental Health Plan",
+            "GET",
+            "api/mental-health-plan",
+            200
+        )
+        if success:
+            assert "daily_habits" in data
+            assert "weekly_goals" in data
+            assert "emergency_contacts" in data
+            print("✅ Mental health plan retrieval successful")
+        return success
+    
     def test_get_assessments(self):
         """Test getting user assessments"""
         success, data = self.run_test(
@@ -252,8 +352,13 @@ class PersianMentalHealthAPITester:
             self.test_login_user()
             self.test_get_profile()
             
-            # DASS-21 assessment flow
+            # Feature tests
             self.test_submit_dass21()
+            self.test_submit_phq9()
+            self.test_mood_entry()
+            self.test_get_mood_entries()
+            self.test_chat_with_bot()
+            self.test_get_mental_health_plan()
             self.test_get_assessments()
         
         # Error handling tests
