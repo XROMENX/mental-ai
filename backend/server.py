@@ -303,12 +303,15 @@ async def submit_dass21(dass_data: DASS21Response, current_user = Depends(get_cu
     # Calculate scores
     results = calculate_dass_scores(dass_data.responses)
     
+    # Convert integer keys to strings for MongoDB compatibility
+    responses_str_keys = {str(k): v for k, v in dass_data.responses.items()}
+    
     # Save to database
     assessment_doc = {
         "assessment_id": str(uuid.uuid4()),
         "user_id": current_user["user_id"],
         "assessment_type": "DASS-21",
-        "responses": dass_data.responses,
+        "responses": responses_str_keys,
         "results": results,
         "completed_at": datetime.utcnow()
     }
