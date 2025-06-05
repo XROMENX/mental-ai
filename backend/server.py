@@ -12,6 +12,7 @@ from pymongo import MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 import asyncio
 from dotenv import load_dotenv
+import random
 
 load_dotenv()
 
@@ -56,6 +57,16 @@ class UserLogin(BaseModel):
 
 class DASS21Response(BaseModel):
     responses: Dict[int, int]
+
+class PHQ9Response(BaseModel):
+    responses: Dict[int, int]
+
+class MoodEntry(BaseModel):
+    mood_level: int
+    note: Optional[str] = ""
+
+class ChatMessage(BaseModel):
+    message: str
 
 class Token(BaseModel):
     access_token: str
@@ -155,6 +166,31 @@ def calculate_dass_scores(responses: Dict[int, int]) -> Dict[str, Any]:
         "recommendations": recommendations
     }
 
+def calculate_phq9_score(responses: Dict[int, int]) -> Dict[str, Any]:
+    total_score = sum(responses.values())
+    
+    def get_severity_level(score):
+        if score <= 4: return "حداقل"
+        elif score <= 9: return "خفیف"
+        elif score <= 14: return "متوسط"
+        elif score <= 19: return "نسبتاً شدید"
+        else: return "شدید"
+    
+    severity_level = get_severity_level(total_score)
+    
+    # Generate analysis
+    analysis = generate_phq9_analysis(total_score, severity_level)
+    
+    # Generate recommendations
+    recommendations = generate_phq9_recommendations(severity_level)
+    
+    return {
+        "total_score": total_score,
+        "severity_level": severity_level,
+        "analysis": analysis,
+        "recommendations": recommendations
+    }
+
 def generate_ai_analysis(dep_score, anx_score, stress_score, dep_level, anx_level, stress_level):
     analysis = "بر اساس تجزیه و تحلیل پاسخ‌های شما: "
     
@@ -166,6 +202,18 @@ def generate_ai_analysis(dep_score, anx_score, stress_score, dep_level, anx_leve
         analysis += "نتایج نشان می‌دهد که شما نیاز به توجه بیشتر به سلامت روان خود دارید. با اعمال تکنیک‌های مدیریت استرس می‌توانید بهبود یابید."
     
     return analysis
+
+def generate_phq9_analysis(total_score, severity_level):
+    if severity_level == "حداقل":
+        return "علائم افسردگی شما در سطح حداقل است. این وضعیت طبیعی محسوب می‌شود."
+    elif severity_level == "خفیف":
+        return "علائم افسردگی خفیفی دارید. با تکنیک‌های خودمراقبتی می‌توانید این وضعیت را بهبود بخشید."
+    elif severity_level == "متوسط":
+        return "علائم افسردگی متوسطی دارید. توصیه می‌شود با یک مشاور یا روان‌شناس صحبت کنید."
+    elif severity_level == "نسبتاً شدید":
+        return "علائم افسردگی نسبتاً شدیدی دارید. مراجعه به متخصص ضروری است."
+    else:
+        return "علائم افسردگی شدیدی دارید. فوراً با یک روان‌پزشک یا متخصص سلامت روان تماس بگیرید."
 
 def generate_recommendations(dep_level, anx_level, stress_level):
     recommendations = []
@@ -199,6 +247,103 @@ def generate_recommendations(dep_level, anx_level, stress_level):
         ]
     
     return recommendations[:5]  # Return top 5 recommendations
+
+def generate_phq9_recommendations(severity_level):
+    if severity_level == "حداقل":
+        return [
+            "ادامه فعالیت‌های مثبت فعلی",
+            "حفظ روابط اجتماعی",
+            "ورزش منظم"
+        ]
+    elif severity_level == "خفیف":
+        return [
+            "افزایش فعالیت‌های لذت‌بخش",
+            "برقراری ارتباط با دوستان و خانواده",
+            "تمرین ذهن‌آگاهی",
+            "نظم در خواب و تغذیه"
+        ]
+    elif severity_level == "متوسط":
+        return [
+            "مشورت با روان‌شناس یا مشاور",
+            "شرکت در گروه‌های حمایتی",
+            "تمرین تکنیک‌های درمان شناختی-رفتاری",
+            "نظارت بر علائم"
+        ]
+    else:
+        return [
+            "مراجعه فوری به متخصص",
+            "درنظرگیری درمان دارویی",
+            "حمایت خانوادگی",
+            "مراقبت ویژه از خود"
+        ]
+
+def generate_chat_response(message: str) -> str:
+    """Simple rule-based chatbot for Persian mental health support"""
+    message_lower = message.lower()
+    
+    # Greeting responses
+    if any(word in message_lower for word in ['سلام', 'درود', 'hi', 'hello']):
+        responses = [
+            "سلام! امیدوارم حال شما خوب باشد. چطور می‌توانم کمکتان کنم؟",
+            "درود بر شما! من اینجا هستم تا گوش دهم. امروز چطور احساس می‌کنید؟",
+            "سلام عزیز! خوشحالم که اینجا هستید. چه چیزی در ذهنتان است؟"
+        ]
+        return random.choice(responses)
+    
+    # Mood-related responses
+    elif any(word in message_lower for word in ['غمگین', 'ناراحت', 'افسرده', 'بد']):
+        responses = [
+            "متأسفم که این‌طور احساس می‌کنید. این احساسات گاهی طبیعی هستند. می‌خواهید درباره‌اش صحبت کنیم؟",
+            "درک می‌کنم که حال شما خوب نیست. چه چیزی باعث این احساس شده؟",
+            "احساسات شما مهم هستند. آیا امروز اتفاق خاصی افتاده؟"
+        ]
+        return random.choice(responses)
+    
+    elif any(word in message_lower for word in ['خوب', 'عالی', 'خوشحال', 'شاد']):
+        responses = [
+            "چه خبر خوبی! خوشحالم که حالتان خوب است. این انرژی مثبت را حفظ کنید.",
+            "فوق‌العاده! چه چیزی باعث این حس خوب شده؟",
+            "عالی است! این لحظات خوب را قدر بدانید."
+        ]
+        return random.choice(responses)
+    
+    # Anxiety-related responses
+    elif any(word in message_lower for word in ['نگران', 'اضطراب', 'ترس', 'استرس']):
+        responses = [
+            "اضطراب و نگرانی بخش طبیعی زندگی هستند. بیایید روی تکنیک‌های تنفس کار کنیم. ۴ ثانیه نفس بکشید، ۷ ثانیه نگه دارید، ۸ ثانیه آرام بدهید.",
+            "درک می‌کنم که احساس نگرانی دارید. گاهی کمک می‌کند که روی چیزهایی که می‌توانید کنترل کنید تمرکز کنید.",
+            "استرس می‌تواند سخت باشد. آیا تا الان تکنیک‌های آرام‌سازی امتحان کرده‌اید؟"
+        ]
+        return random.choice(responses)
+    
+    # Study/work stress
+    elif any(word in message_lower for word in ['درس', 'امتحان', 'کار', 'دانشگاه', 'مطالعه']):
+        responses = [
+            "فشار تحصیلی و کاری چالش بزرگی است. مهم این است که تعادل داشته باشید. برنامه‌ریزی و استراحت منظم کمک می‌کند.",
+            "درک می‌کنم که فشار درسی سنگین است. آیا زمان کافی برای استراحت و تفریح در نظر گرفته‌اید؟",
+            "موفقیت تحصیلی مهم است، اما سلامتی شما مهم‌تر است. چگونه از خودتان مراقبت می‌کنید؟"
+        ]
+        return random.choice(responses)
+    
+    # Sleep issues
+    elif any(word in message_lower for word in ['خواب', 'بیدار', 'خستگی']):
+        responses = [
+            "خواب خوب برای سلامت روان ضروری است. آیا قبل از خواب از گوشی و صفحه نمایش دوری می‌کنید؟",
+            "مشکلات خواب می‌تواند روی حال و احوال تأثیر بگذارد. آیا برنامه ثابت خواب دارید؟",
+            "برای خواب بهتر، می‌توانید قبل از خواب مدیتیشن یا تنفس عمیق انجام دهید."
+        ]
+        return random.choice(responses)
+    
+    # General support
+    else:
+        responses = [
+            "درک می‌کنم. گاهی صحبت کردن کمک می‌کند. چه چیز دیگری در ذهنتان است؟",
+            "ممنون که با من در میان گذاشتید. چگونه می‌توانم بهتر کمکتان کنم؟",
+            "احساسات شما مهم هستند. آیا تکنیک‌های آرام‌سازی یاد گرفته‌اید؟",
+            "هر چه احساس می‌کنید طبیعی است. مهم این است که مراقب خودتان باشید.",
+            "اگر احساس کردید نیاز به کمک حرفه‌ای دارید، لطفاً با مشاور یا روان‌شناس صحبت کنید."
+        ]
+        return random.choice(responses)
 
 # API Routes
 @app.get("/api/health")
@@ -319,6 +464,113 @@ async def submit_dass21(dass_data: DASS21Response, current_user = Depends(get_cu
     await db.assessments.insert_one(assessment_doc)
     
     return results
+
+@app.post("/api/submit-phq9")
+async def submit_phq9(phq_data: PHQ9Response, current_user = Depends(get_current_user)):
+    # Validate responses
+    if len(phq_data.responses) != 9:
+        raise HTTPException(status_code=400, detail="باید به تمام 9 سوال پاسخ داده شود")
+    
+    # Calculate scores
+    results = calculate_phq9_score(phq_data.responses)
+    
+    # Convert integer keys to strings for MongoDB compatibility
+    responses_str_keys = {str(k): v for k, v in phq_data.responses.items()}
+    
+    # Save to database
+    assessment_doc = {
+        "assessment_id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "assessment_type": "PHQ-9",
+        "responses": responses_str_keys,
+        "results": results,
+        "completed_at": datetime.utcnow()
+    }
+    
+    await db.assessments.insert_one(assessment_doc)
+    
+    return results
+
+@app.post("/api/mood-entry")
+async def save_mood_entry(mood_data: MoodEntry, current_user = Depends(get_current_user)):
+    # Check if entry for today already exists
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    
+    existing_entry = await db.mood_entries.find_one({
+        "user_id": current_user["user_id"],
+        "date": {"$gte": today, "$lt": tomorrow}
+    })
+    
+    mood_doc = {
+        "user_id": current_user["user_id"],
+        "mood_level": mood_data.mood_level,
+        "note": mood_data.note,
+        "date": datetime.utcnow()
+    }
+    
+    if existing_entry:
+        # Update existing entry
+        await db.mood_entries.update_one(
+            {"_id": existing_entry["_id"]},
+            {"$set": mood_doc}
+        )
+    else:
+        # Create new entry
+        mood_doc["entry_id"] = str(uuid.uuid4())
+        await db.mood_entries.insert_one(mood_doc)
+    
+    return {"message": "خلق و خو با موفقیت ذخیره شد"}
+
+@app.get("/api/mood-entries")
+async def get_mood_entries(current_user = Depends(get_current_user)):
+    entries = await db.mood_entries.find(
+        {"user_id": current_user["user_id"]},
+        {"_id": 0}
+    ).sort("date", -1).to_list(length=30)  # Last 30 entries
+    
+    return entries
+
+@app.post("/api/chat")
+async def chat_with_bot(chat_data: ChatMessage, current_user = Depends(get_current_user)):
+    response = generate_chat_response(chat_data.message)
+    
+    # Save chat to database
+    chat_doc = {
+        "chat_id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "user_message": chat_data.message,
+        "bot_response": response,
+        "timestamp": datetime.utcnow()
+    }
+    
+    await db.chat_history.insert_one(chat_doc)
+    
+    return {"response": response}
+
+@app.get("/api/mental-health-plan")
+async def get_mental_health_plan(current_user = Depends(get_current_user)):
+    # This would ideally be generated based on user's assessment results
+    # For now, returning a static plan
+    plan = {
+        "daily_habits": [
+            "تنفس عمیق ۱۰ دقیقه صبحگاهی",
+            "پیاده‌روی ۳۰ دقیقه در طبیعت", 
+            "نوشتن ۳ چیز مثبت روز",
+            "مدیتیشن ۵ دقیقه قبل خواب"
+        ],
+        "weekly_goals": [
+            "شرکت در یک فعالیت اجتماعی",
+            "یادگیری مهارت جدید",
+            "ارتباط با دوست یا خانواده"
+        ],
+        "emergency_contacts": {
+            "crisis_line": "۱۴۸۰",
+            "emergency": "۱۱۵"
+        }
+    }
+    
+    return plan
 
 @app.get("/api/assessments")
 async def get_user_assessments(current_user = Depends(get_current_user)):
