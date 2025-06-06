@@ -10,7 +10,23 @@ uvicorn server:app --host 0.0.0.0 --port 8001 &
 BACKEND_PID=$!
 
 echo "Waiting for backend to start..."
-sleep 30
+
+# Wait until the backend port is reachable or the process exits
+MAX_WAIT=30
+COUNT=0
+until nc -z localhost 8001; do
+    if ! kill -0 $BACKEND_PID 2>/dev/null; then
+        echo "Backend process exited before becoming ready, exiting"
+        exit 1
+    fi
+    COUNT=$((COUNT + 1))
+    if [ "$COUNT" -ge "$MAX_WAIT" ]; then
+        echo "Backend did not become ready in time, exiting"
+        kill $BACKEND_PID
+        exit 1
+    fi
+    sleep 1
+done
 
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
     echo "Backend failed to start at initialization, exiting"
