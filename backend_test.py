@@ -2,6 +2,7 @@ import sys
 import uuid
 from datetime import datetime
 
+import os
 import requests
 
 
@@ -341,7 +342,7 @@ class PersianMentalHealthAPITester:
 
 
 def main():
-    base_url = "https://aae197da-d3d8-4951-8d0c-e6ef8f61190f.preview.emergentagent.com"
+    base_url = os.getenv("API_BASE_URL", "http://localhost:8001")
     tester = PersianMentalHealthAPITester(base_url)
     success = tester.run_all_tests()
     return 0 if success else 1
