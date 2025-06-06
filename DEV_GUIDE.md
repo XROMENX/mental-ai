@@ -31,8 +31,9 @@ This project contains a FastAPI backend and a React frontend. The following inst
 
 The file `backend_test.py` performs integration tests against the running API.
 
-1. Ensure the backend is running locally on `http://localhost:8001` or edit the
-   `base_url` inside `backend_test.py` to point to the correct address.
+1. Ensure the backend is running locally on `http://localhost:8001` or set the
+   `API_BASE_URL` environment variable to point to the correct address. The
+   tests default to `http://localhost:8001` if the variable is not set.
 2. Run the tests from the repository root:
    ```bash
    python backend_test.py
