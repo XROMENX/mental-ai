@@ -68,3 +68,63 @@ This project supports a master’s thesis titled:
 
 ## 🗂️ Project Structure
 
+```
+backend/   - FastAPI application
+frontend/  - React single-page app
+scripts/   - helper scripts for development/deployment
+tests/     - automated test suite
+```
+
+## 🚀 Setup
+
+1. Create a virtual environment and install backend requirements:
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt
+```
+
+2. Copy environment variables and set a `SECRET_KEY`:
+
+```bash
+cp backend/.env backend/.env.local  # edit values as needed
+export SECRET_KEY="change-me"      # required for JWT
+```
+
+3. Start the backend:
+
+```bash
+uvicorn backend.server:app --reload
+```
+
+4. Install and run the frontend:
+
+```bash
+cd frontend
+yarn install
+yarn start
+```
+
+The repository keeps `frontend/yarn.lock` to ensure reproducible builds.
+
+## 🧪 Running Tests
+
+Run the automated API tests once the backend is running:
+
+```bash
+python backend_test.py http://localhost:8000
+```
+
+## 🐳 Docker
+
+To build and run the combined application with Docker:
+
+```bash
+docker build -t hami .
+docker run -p 80:80 hami
+```
+
+## 📝 License
+
+This project is provided for **academic research** purposes only. See the [LICENSE](LICENSE) file for details.
