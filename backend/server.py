@@ -4,8 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-from .gamification_utils import calculate_level_and_badges
-from .nlp_analysis import analyze_mental_state
+
 
 import bcrypt
 import jwt
@@ -13,7 +12,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
 from pydantic import BaseModel, EmailStr
 
 load_dotenv()
@@ -37,7 +36,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
 # JWT settings
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY: str = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY environment variable is not set")
 ALGORITHM = "HS256"
@@ -79,6 +78,16 @@ class ChatMessage(BaseModel):
     message: str
 
 
+class SleepEntry(BaseModel):
+    hours: float
+    quality: int
+    note: Optional[str] = ""
+
+
+class DailyReflection(BaseModel):
+    text: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -94,7 +103,7 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_access_token(data: dict):
+def create_access_token(data: Dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -110,9 +119,7 @@ async def award_xp(user_id: str, amount: int):
 
     xp = user.get("xp", 0) + amount
     level, badges = calculate_level_and_badges(xp)
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"xp": xp, "level": level, "badges": badges}},
+
     )
 
 
@@ -134,7 +141,7 @@ async def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
             )
         return user
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -631,6 +638,79 @@ async def get_mood_entries(current_user=Depends(get_current_user)):
     return entries
 
 
+@app.post("/api/sleep-entry")
+async def save_sleep_entry(
+    sleep_data: SleepEntry, current_user=Depends(get_current_user)
+):
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    existing = await db.sleep_entries.find_one(
+        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
+    )
+
+    doc = {
+        "user_id": current_user["user_id"],
+        "hours": sleep_data.hours,
+        "quality": sleep_data.quality,
+        "note": sleep_data.note,
+        "date": datetime.utcnow(),
+    }
+
+    if existing:
+        await db.sleep_entries.update_one({"_id": existing["_id"]}, {"$set": doc})
+    else:
+        doc["entry_id"] = str(uuid.uuid4())
+        await db.sleep_entries.insert_one(doc)
+
+    await award_xp(current_user["user_id"], 5)
+    return {"message": "اطلاعات خواب ذخیره شد"}
+
+
+@app.get("/api/sleep-entries")
+async def get_sleep_entries(current_user=Depends(get_current_user)):
+    entries = (
+        await db.sleep_entries.find({"user_id": current_user["user_id"]}, {"_id": 0})
+        .sort("date", -1)
+        .to_list(length=30)
+    )
+    return entries
+
+
+@app.post("/api/daily-reflection")
+async def save_daily_reflection(
+    reflection: DailyReflection, current_user=Depends(get_current_user)
+):
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    existing = await db.reflections.find_one(
+        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
+    )
+
+    doc = {
+        "user_id": current_user["user_id"],
+        "text": reflection.text,
+        "date": datetime.utcnow(),
+    }
+    if existing:
+        await db.reflections.update_one({"_id": existing["_id"]}, {"$set": doc})
+    else:
+        doc["entry_id"] = str(uuid.uuid4())
+        await db.reflections.insert_one(doc)
+
+    await award_xp(current_user["user_id"], 5)
+    return {"message": "یادداشت روزانه ذخیره شد"}
+
+
+@app.get("/api/daily-reflections")
+async def get_daily_reflections(current_user=Depends(get_current_user)):
+    reflections = (
+        await db.reflections.find({"user_id": current_user["user_id"]}, {"_id": 0})
+        .sort("date", -1)
+        .to_list(length=30)
+    )
+    return reflections
+
+
 @app.post("/api/chat")
 async def chat_with_bot(chat_data: ChatMessage, current_user=Depends(get_current_user)):
     response = generate_chat_response(chat_data.message)
@@ -670,6 +750,12 @@ async def get_mental_health_plan(current_user=Depends(get_current_user)):
     }
 
     return plan
+
+
+@app.get("/api/journeys")
+async def get_journeys(_: Any = Depends(get_current_user)):
+    """Return available habit-building journeys."""
+    return get_default_journeys()
 
 
 @app.get("/api/assessments")
