@@ -132,7 +132,7 @@ frontend:
     file: "frontend/src/components/Dashboard.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
@@ -158,3 +158,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Added chart features and ran tests."
+  - agent: "main"
+    message: "Attempted dashboard retest; environment missing dependencies prevented full execution."

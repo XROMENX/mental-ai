@@ -29,6 +29,8 @@ This project supports a master’s thesis titled:
 - “How are you feeling today?” prompt
 - Emoji/scale-based logging + optional journaling
 - Used for AI pattern detection & roadmap planning
+- Sleep tracking for hours and quality
+- Daily reflections journal
 
 ### 🤖 AI Analysis
 - **NLP** on text input (journal/chat) using HuggingFace (e.g., ParsBERT)
@@ -36,11 +38,12 @@ This project supports a master’s thesis titled:
 - Interprets results, trends, and suggests next actions
 
 ### 🧭 Personalized Roadmap
-- *Fabulous-style* habit-building journeys
+- *Fabulous-style* habit-building journeys with beautiful routines and progress tracking
 - Suggestions include:
   - Sleep tracking
   - Mindfulness reminders
   - Daily reflections
+  - Short gratitude practice
 
 ### 💬 Persian Chatbot (v1)
 - Simple rule-based assistant in Farsi
