@@ -4,8 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-from .gamification_utils import calculate_level_and_badges  # type: ignore
-from .journeys_utils import get_default_journeys  # type: ignore
+
 
 import bcrypt
 import jwt
@@ -117,16 +116,10 @@ async def award_xp(user_id: str, amount: int):
     user = await db.users.find_one({"user_id": user_id})
     if not user:
         return
+
     xp = user.get("xp", 0) + amount
     level, badges = calculate_level_and_badges(xp)
-    current_badges = user.get("badges", [])
-    for badge in badges:
-        if badge not in current_badges:
-            current_badges.append(badge)
 
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"xp": xp, "level": level, "badges": current_badges}},
     )
 
 
@@ -617,6 +610,7 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
         "user_id": current_user["user_id"],
         "mood_level": mood_data.mood_level,
         "note": mood_data.note,
+        "analysis": analyze_mental_state(mood_data.note or ""),
         "date": datetime.utcnow(),
     }
 
@@ -727,6 +721,7 @@ async def chat_with_bot(chat_data: ChatMessage, current_user=Depends(get_current
         "user_id": current_user["user_id"],
         "user_message": chat_data.message,
         "bot_response": response,
+        "analysis": analyze_mental_state(chat_data.message),
         "timestamp": datetime.utcnow(),
     }
 
