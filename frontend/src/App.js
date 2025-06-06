@@ -55,7 +55,7 @@ const App = () => {
   // Mental health plan state
   const [userPlan, setUserPlan] = useState(null);
 
-  const [gamification, setGamification] = useState({ xp: 0, level: 1, badges: [], streak: 0 });
+
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
@@ -72,7 +72,7 @@ const App = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
-      setGamification({ xp: response.data.xp, level: response.data.level, badges: response.data.badges, streak: response.data.streak });
+
       setCurrentPage('dashboard');
       fetchUserData();
     } catch (error) {
@@ -136,7 +136,7 @@ const App = () => {
 
       localStorage.setItem('token', response.data.access_token);
       setUser(response.data.user);
-      setGamification({ xp: response.data.user.xp, level: response.data.user.level, badges: response.data.user.badges, streak: response.data.user.streak });
+
       setCurrentPage('dashboard');
       fetchUserData();
     } catch (error) {
@@ -167,7 +167,7 @@ const App = () => {
     ]);
     setUserPlan(null);
     setAssessmentHistory([]);
-    setGamification({ xp: 0, level: 1, badges: [], streak: 0 });
+
   };
 
   const saveMoodEntry = async () => {
@@ -429,7 +429,7 @@ const App = () => {
       <div className="mb-6 text-right">
         <p className="font-bold">سطح {gamification.level}</p>
         <p className="text-sm">XP: {gamification.xp}</p>
-        <p className="text-sm">روزهای متوالی: {gamification.streak}</p>
+
         {gamification.badges.length > 0 && (
           <p className="text-sm">نشان‌ها: {gamification.badges.join(', ')}</p>
         )}

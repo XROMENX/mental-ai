@@ -124,17 +124,7 @@ backend:
       - working: true
         agent: "main"
         comment: "Added XP system and gamification API."
-  - task: "streak counter"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: true
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Implemented streak tracking with mood entries."
+
 frontend:
   - task: "dashboard charts"
     implemented: true
@@ -157,11 +147,7 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Show XP, level, badges and streak on dashboard."
-metadata:
-  created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 3
+
   run_ui: false
 test_plan:
   current_focus:
