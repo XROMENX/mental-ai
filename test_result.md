@@ -100,4 +100,42 @@
 
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
-#====================================================================================================
+#====================================================================================================user_problem_statement: "create a main dashboard with charts"
+backend:
+  - task: "fetch assessment data"
+    implemented: true
+    working: true
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added API call to fetch assessments for charts."
+frontend:
+  - task: "dashboard charts"
+    implemented: true
+    working: true
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added mood and DASS-21 charts on dashboard."
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+test_plan:
+  current_focus:
+    - "dashboard charts"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+agent_communication:
+  - agent: "main"
+    message: "Added chart features and ran tests."
