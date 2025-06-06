@@ -124,6 +124,7 @@ backend:
       - working: true
         agent: "main"
         comment: "Added XP system and gamification API."
+
 frontend:
   - task: "dashboard charts"
     implemented: true
@@ -146,11 +147,7 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Show XP, level and badges on dashboard."
-metadata:
-  created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 2
+
   run_ui: false
 test_plan:
   current_focus:

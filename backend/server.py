@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+from .gamification_utils import calculate_level_and_badges, calculate_streak
+
 import bcrypt
 import jwt
 from dotenv import load_dotenv
@@ -105,19 +107,6 @@ async def award_xp(user_id: str, amount: int):
     if not user:
         return
     xp = user.get("xp", 0) + amount
-    level = xp // 100 + 1
-    badges = user.get("badges", [])
-
-    if xp >= 100 and "Novice" not in badges:
-        badges.append("Novice")
-    if xp >= 500 and "Expert" not in badges:
-        badges.append("Expert")
-
-    await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": {"xp": xp, "level": level, "badges": badges}},
-    )
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -464,6 +453,7 @@ async def register_user(user_data: UserRegister):
         "xp": 0,
         "level": 1,
         "badges": [],
+
     }
 
     await db.users.insert_one(user_doc)
@@ -480,6 +470,7 @@ async def register_user(user_data: UserRegister):
         "xp": 0,
         "level": 1,
         "badges": [],
+
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -509,6 +500,8 @@ async def login_user(user_data: UserLogin):
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
         "badges": user.get("badges", []),
+
+
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -525,6 +518,7 @@ async def get_profile(current_user=Depends(get_current_user)):
         "xp": current_user.get("xp", 0),
         "level": current_user.get("level", 1),
         "badges": current_user.get("badges", []),
+
     }
 
 
@@ -619,8 +613,7 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
         mood_doc["entry_id"] = str(uuid.uuid4())
         await db.mood_entries.insert_one(mood_doc)
 
-    # Award XP for daily mood entry
-    await award_xp(current_user["user_id"], 5)
+
 
     return {"message": "خلق و خو با موفقیت ذخیره شد"}
 
@@ -694,6 +687,7 @@ async def get_gamification(current_user=Depends(get_current_user)):
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
         "badges": user.get("badges", []),
+
     }
 
 
