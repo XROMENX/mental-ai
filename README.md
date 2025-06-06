@@ -36,11 +36,12 @@ This project supports a master’s thesis titled:
 - Interprets results, trends, and suggests next actions
 
 ### 🧭 Personalized Roadmap
-- *Fabulous-style* habit-building journeys
+- *Fabulous-style* habit-building journeys with beautiful routines and progress tracking
 - Suggestions include:
   - Sleep tracking
   - Mindfulness reminders
   - Daily reflections
+  - Short gratitude practice
 
 ### 💬 Persian Chatbot (v1)
 - Simple rule-based assistant in Farsi
