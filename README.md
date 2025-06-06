@@ -65,9 +65,3 @@ This project supports a master’s thesis titled:
 | Auth            | JWT / Firebase Auth (to be decided) |
 
 ---
-
-## 🗂️ Project Structure
-
-## License
-
-This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International](LICENSE) license.
