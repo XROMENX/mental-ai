@@ -84,6 +84,10 @@ class Token(BaseModel):
     user: Dict[str, Any]
 
 
+class MemoryUpdate(BaseModel):
+    memory: Dict[str, Any]
+
+
 # Helper functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -107,6 +111,7 @@ async def award_xp(user_id: str, amount: int):
     if not user:
         return
     xp = user.get("xp", 0) + amount
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -343,18 +348,24 @@ def generate_phq9_recommendations(severity_level):
         ]
 
 
-def generate_chat_response(message: str) -> str:
+def generate_chat_response(
+    message: str, memory: Optional[Dict[str, Any]] = None
+) -> str:
     """Simple rule-based chatbot for Persian mental health support"""
     message_lower = message.lower()
+    nickname = None
+    if memory:
+        nickname = memory.get("name") or memory.get("nickname")
 
     # Greeting responses
     if any(word in message_lower for word in ["سلام", "درود", "hi", "hello"]):
-        responses = [
-            "سلام! امیدوارم حال شما خوب باشد. چطور می‌توانم کمکتان کنم؟",
-            "درود بر شما! من اینجا هستم تا گوش دهم. امروز چطور احساس می‌کنید؟",
-            "سلام عزیز! خوشحالم که اینجا هستید. چه چیزی در ذهنتان است؟",
+        base_responses = [
+            "امیدوارم حال شما خوب باشد. چطور می‌توانم کمکتان کنم؟",
+            "من اینجا هستم تا گوش دهم. امروز چطور احساس می‌کنید؟",
+            "خوشحالم که اینجا هستید. چه چیزی در ذهنتان است؟",
         ]
-        return random.choice(responses)
+        greeting = f"سلام {nickname}!" if nickname else "سلام!"
+        return f"{greeting} {random.choice(base_responses)}"
 
     # Mood-related responses
     elif any(word in message_lower for word in ["غمگین", "ناراحت", "افسرده", "بد"]):
@@ -452,8 +463,9 @@ async def register_user(user_data: UserRegister):
         "last_login": datetime.utcnow(),
         "xp": 0,
         "level": 1,
+        "memory": {},
         "badges": [],
-
+        "memory": {},
     }
 
     await db.users.insert_one(user_doc)
@@ -469,8 +481,8 @@ async def register_user(user_data: UserRegister):
         "student_level": user_data.studentLevel,
         "xp": 0,
         "level": 1,
+        "memory": {},
         "badges": [],
-
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -499,9 +511,8 @@ async def login_user(user_data: UserLogin):
         "student_level": user["student_level"],
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
+        "memory": user.get("memory", {}),
         "badges": user.get("badges", []),
-
-
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -517,8 +528,8 @@ async def get_profile(current_user=Depends(get_current_user)):
         "student_level": current_user["student_level"],
         "xp": current_user.get("xp", 0),
         "level": current_user.get("level", 1),
+        "memory": current_user.get("memory", {}),
         "badges": current_user.get("badges", []),
-
     }
 
 
@@ -613,8 +624,6 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
         mood_doc["entry_id"] = str(uuid.uuid4())
         await db.mood_entries.insert_one(mood_doc)
 
-
-
     return {"message": "خلق و خو با موفقیت ذخیره شد"}
 
 
@@ -631,7 +640,7 @@ async def get_mood_entries(current_user=Depends(get_current_user)):
 
 @app.post("/api/chat")
 async def chat_with_bot(chat_data: ChatMessage, current_user=Depends(get_current_user)):
-    response = generate_chat_response(chat_data.message)
+    response = generate_chat_response(chat_data.message, current_user.get("memory", {}))
 
     # Save chat to database
     chat_doc = {
@@ -687,8 +696,24 @@ async def get_gamification(current_user=Depends(get_current_user)):
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
         "badges": user.get("badges", []),
-
     }
+
+
+@app.get("/api/memory")
+async def get_memory(current_user=Depends(get_current_user)):
+    """Return stored user memory."""
+    return current_user.get("memory", {})
+
+
+@app.put("/api/memory")
+async def update_memory(update: MemoryUpdate, current_user=Depends(get_current_user)):
+    """Update user memory with provided key/value pairs."""
+    memory = current_user.get("memory", {})
+    memory.update(update.memory)
+    await db.users.update_one(
+        {"user_id": current_user["user_id"]}, {"$set": {"memory": memory}}
+    )
+    return {"memory": memory}
 
 
 @app.get("/api/admin/export-data")
