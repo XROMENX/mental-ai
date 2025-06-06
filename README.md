@@ -64,4 +64,3 @@ This project supports a master’s thesis titled:
 | DB              | PostgreSQL / Firebase               |
 | Auth            | JWT / Firebase Auth (to be decided) |
 
----
