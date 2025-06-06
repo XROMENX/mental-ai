@@ -129,7 +129,7 @@ frontend:
   - task: "dashboard charts"
     implemented: true
     working: true
-    file: "frontend/src/App.js"
+    file: "frontend/src/components/Dashboard.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -140,7 +140,7 @@ frontend:
   - task: "display gamification"
     implemented: true
     working: true
-    file: "frontend/src/App.js"
+    file: "frontend/src/components/Dashboard.js"
     stuck_count: 0
     priority: "medium"
     needs_retesting: true

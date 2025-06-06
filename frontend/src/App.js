@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+import Dashboard from './components/Dashboard';
+import AuthForm from './components/AuthForm';
+import DASS21Test from './components/DASS21Test';
 import './App.css';
 
 const App = () => {
@@ -54,6 +45,7 @@ const App = () => {
 
   // Mental health plan state
   const [userPlan, setUserPlan] = useState(null);
+  const [gamification, setGamification] = useState({ level: 1, xp: 0, badges: [] });
 
 
 
@@ -298,7 +290,7 @@ const App = () => {
     }
   };
 
-  const ConsentForm = () => (
+const ConsentForm = () => (
     <div className="bg-white rounded-lg p-8 shadow-lg max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-right text-gray-800 mb-6">فرم رضایت‌نامه</h2>
       <div className="text-right text-gray-700 space-y-4 mb-6">
@@ -321,242 +313,8 @@ const App = () => {
         />
       </label>
     </div>
-  );
+);
 
-  const AuthForm = () => (
-    <div className="bg-white rounded-lg p-8 shadow-lg max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-right text-gray-800 mb-6">
-        {authMode === 'login' ? 'ورود' : 'ثبت‌نام'}
-      </h2>
-      
-      <form onSubmit={handleAuth} className="space-y-4">
-        {authMode === 'register' && (
-          <>
-            <input
-              type="text"
-              placeholder="نام کامل"
-              value={authData.fullName}
-              onChange={(e) => setAuthData({...authData, fullName: e.target.value})}
-              className="w-full p-3 border rounded-lg text-right"
-              required
-            />
-            <input
-              type="number"
-              placeholder="سن"
-              value={authData.age}
-              onChange={(e) => setAuthData({...authData, age: e.target.value})}
-              className="w-full p-3 border rounded-lg text-right"
-              required
-            />
-            <select
-              value={authData.studentLevel}
-              onChange={(e) => setAuthData({...authData, studentLevel: e.target.value})}
-              className="w-full p-3 border rounded-lg text-right cursor-pointer"
-              required
-            >
-              <option value="" disabled>سطح تحصیلات</option>
-              <option value="undergraduate">کارشناسی</option>
-              <option value="master">کارشناسی ارشد</option>
-              <option value="phd">دکتری</option>
-            </select>
-          </>
-        )}
-        
-        <input
-          type="email"
-          placeholder="ایمیل"
-          value={authData.email}
-          onChange={(e) => setAuthData({...authData, email: e.target.value})}
-          className="w-full p-3 border rounded-lg text-right"
-          required
-        />
-        
-        <input
-          type="password"
-          placeholder="رمز عبور"
-          value={authData.password}
-          onChange={(e) => setAuthData({...authData, password: e.target.value})}
-          className="w-full p-3 border rounded-lg text-right"
-          required
-        />
-        
-        {authMode === 'register' && (
-          <input
-            type="password"
-            placeholder="تکرار رمز عبور"
-            value={authData.confirmPassword}
-            onChange={(e) => setAuthData({...authData, confirmPassword: e.target.value})}
-            className="w-full p-3 border rounded-lg text-right"
-            required
-          />
-        )}
-        
-        {error && <p className="text-red-500 text-right">{error}</p>}
-        
-        <button
-          type="submit"
-          disabled={loading || (authMode === 'register' && !authData.consentGiven)}
-          className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'در حال پردازش...' : authMode === 'login' ? 'ورود' : 'ثبت‌نام'}
-        </button>
-      </form>
-      
-      <p className="text-center mt-4">
-        {authMode === 'login' ? 'حساب کاربری ندارید؟' : 'حساب کاربری دارید؟'}
-        <button
-          onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-          className="text-blue-600 mr-2"
-        >
-          {authMode === 'login' ? 'ثبت‌نام' : 'ورود'}
-        </button>
-      </p>
-    </div>
-  );
-
-  const Dashboard = () => (
-    <div className="bg-white rounded-lg p-8 shadow-lg">
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-        >
-          خروج
-        </button>
-        <h2 className="text-2xl font-bold text-right">خوش آمدید، {user?.full_name}</h2>
-      </div>
-
-      <div className="mb-6 text-right">
-        <p className="font-bold">سطح {gamification.level}</p>
-        <p className="text-sm">XP: {gamification.xp}</p>
-
-        {gamification.badges.length > 0 && (
-          <p className="text-sm">نشان‌ها: {gamification.badges.join(', ')}</p>
-        )}
-      </div>
-
-      {/* Today's mood status */}
-      {todayMood && (
-        <div className="mb-6 p-4 bg-green-50 rounded-lg border-right-4 border-green-500">
-          <p className="text-right text-green-800">
-            خلق و خوی امروز شما: {getMoodText(todayMood)} ثبت شده است
-          </p>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          onClick={() => setCurrentPage('dass21')}
-          className="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">آزمون DASS-21</h3>
-          <p className="text-right opacity-90">ارزیابی افسردگی، اضطراب و استرس</p>
-        </div>
-        
-        <div 
-          onClick={() => setCurrentPage('phq9')}
-          className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">آزمون PHQ-9</h3>
-          <p className="text-right opacity-90">ارزیابی تخصصی افسردگی</p>
-        </div>
-        
-        <div 
-          onClick={() => setCurrentPage('mood-tracker')}
-          className="bg-gradient-to-br from-green-500 to-teal-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">ثبت خلق و خو روزانه</h3>
-          <p className="text-right opacity-90">امروز چطور احساس می‌کنید؟</p>
-        </div>
-        
-        <div 
-          onClick={() => setCurrentPage('chatbot')}
-          className="bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">گپ با مشاور</h3>
-          <p className="text-right opacity-90">صحبت کردن می‌تواند کمک کند</p>
-        </div>
-        
-        <div 
-          onClick={() => setCurrentPage('mental-health-plan')}
-          className="bg-gradient-to-br from-purple-500 to-pink-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">نقشه راه سلامت روان</h3>
-          <p className="text-right opacity-90">برنامه شخصی‌سازی شده برای بهبود</p>
-        </div>
-
-        <div
-          onClick={() => setCurrentPage('history')}
-          className="bg-gradient-to-br from-gray-500 to-gray-700 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow"
-        >
-          <h3 className="text-xl font-bold text-right mb-2">تاریخچه ارزیابی‌ها</h3>
-          <p className="text-right opacity-90">مشاهده نتایج قبلی</p>
-        </div>
-      </div>
-
-      {/* Charts Section */}
-      {moodHistory.length > 0 && (
-        <div className="mt-10">
-          <h3 className="text-xl font-bold mb-4 text-right">روند خلق و خو</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={moodHistory
-                .slice()
-                .reverse()
-                .map((entry) => ({
-                  date: new Date(entry.date).toLocaleDateString('fa-IR'),
-                  mood: entry.mood_level,
-                }))}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis domain={[1, 5]} allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="mood" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {assessmentHistory.some((a) => a.assessment_type === 'DASS-21') && (
-        <div className="mt-10">
-          <h3 className="text-xl font-bold mb-4 text-right">آخرین نتیجه DASS-21</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={(function () {
-                const latest = assessmentHistory.find(
-                  (a) => a.assessment_type === 'DASS-21'
-                );
-                if (!latest) return [];
-                return [
-                  {
-                    name: 'افسردگی',
-                    score: latest.results.depression_score,
-                  },
-                  {
-                    name: 'اضطراب',
-                    score: latest.results.anxiety_score,
-                  },
-                  {
-                    name: 'استرس',
-                    score: latest.results.stress_score,
-                  },
-                ];
-              })()}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis domain={[0, 42]} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="score" fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </div>
-  );
 
   const MoodTracker = () => {
     const moodOptions = [
@@ -762,64 +520,6 @@ const App = () => {
     </div>
   );
 
-  const DASS21Test = () => (
-    <div className="bg-white rounded-lg p-8 shadow-lg max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <button
-          onClick={() => setCurrentPage('dashboard')}
-          className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-        >
-          بازگشت
-        </button>
-        <h2 className="text-2xl font-bold text-right">آزمون DASS-21</h2>
-      </div>
-      
-      <p className="text-right text-gray-600 mb-6">
-        لطفاً هر سوال را با دقت بخوانید و بر اساس تجربه شما در هفته گذشته پاسخ دهید.
-      </p>
-      
-      <div className="space-y-6">
-        {dass21Questions.map((question) => (
-          <div key={question.id} className="border-b pb-4">
-            <p className="text-right font-medium mb-3">{question.text}</p>
-            <div className="flex justify-end space-x-4 space-x-reverse">
-              {[
-                { value: 0, label: 'اصلاً' },
-                { value: 1, label: 'گاهی' },
-                { value: 2, label: 'اغلب' },
-                { value: 3, label: 'خیلی زیاد' }
-              ].map((option) => (
-                <label key={option.value} className="flex items-center cursor-pointer">
-                  <span className="mr-2 text-sm">{option.label}</span>
-                  <input
-                    type="radio"
-                    name={`question_${question.id}`}
-                    value={option.value}
-                    checked={dassResponses[question.id] === option.value}
-                    onChange={(e) => setDassResponses({
-                      ...dassResponses,
-                      [question.id]: parseInt(e.target.value)
-                    })}
-                    className="mr-1 cursor-pointer"
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-8 text-center">
-        <button
-          onClick={submitDASS21}
-          disabled={loading || Object.keys(dassResponses).length !== 21}
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'در حال پردازش...' : 'ارسال و دریافت نتایج'}
-        </button>
-      </div>
-    </div>
-  );
 
   const Results = () => (
     <div className="bg-white rounded-lg p-8 shadow-lg max-w-4xl mx-auto">
@@ -1110,5 +810,6 @@ const App = () => {
     </div>
   );
 };
+
 
 export default App;
