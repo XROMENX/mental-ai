@@ -1,8 +1,10 @@
+import os
 import sys
 import uuid
 from datetime import datetime
 
 import requests
+import pytest
 
 
 class PersianMentalHealthAPITester:
@@ -340,12 +342,19 @@ class PersianMentalHealthAPITester:
         return self.tests_passed == self.tests_run
 
 
-def main():
-    base_url = "https://aae197da-d3d8-4951-8d0c-e6ef8f61190f.preview.emergentagent.com"
+def run_all_tests():
+    base_url = os.getenv(
+        "API_BASE_URL",
+        "https://aae197da-d3d8-4951-8d0c-e6ef8f61190f.preview.emergentagent.com",
+    )
     tester = PersianMentalHealthAPITester(base_url)
-    success = tester.run_all_tests()
-    return 0 if success else 1
+    return tester.run_all_tests()
+
+
+def test_backend_api():
+    pytest.skip("Integration tests require running backend API.")
+    assert run_all_tests()
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(0 if run_all_tests() else 1)
