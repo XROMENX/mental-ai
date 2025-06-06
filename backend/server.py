@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+from .gamification_utils import calculate_level_and_badges, calculate_streak
+
 import bcrypt
 import jwt
 from dotenv import load_dotenv
@@ -97,6 +99,35 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+async def award_xp(user_id: str, amount: int):
+    """Add XP to user and update level and badges."""
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        return
+    xp = user.get("xp", 0) + amount
+    level, badges = calculate_level_and_badges(xp)
+    current_badges = user.get("badges", [])
+    for b in badges:
+        if b not in current_badges:
+            current_badges.append(b)
+
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"xp": xp, "level": level, "badges": current_badges}},
+    )
+
+async def update_streak(user_id: str):
+    """Update the user's daily streak based on mood entries."""
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        return
+    last_entry = await db.mood_entries.find_one(
+        {"user_id": user_id}, sort=[("date", -1)]
+    )
+    new_streak = calculate_streak(last_entry["date"] if last_entry else None, user.get("streak", 0))
+    await db.users.update_one({"user_id": user_id}, {"$set": {"streak": new_streak}})
 
 
 async def get_current_user(
@@ -441,6 +472,10 @@ async def register_user(user_data: UserRegister):
         "consent_given": user_data.consentGiven,
         "created_at": datetime.utcnow(),
         "last_login": datetime.utcnow(),
+        "xp": 0,
+        "level": 1,
+        "badges": [],
+        "streak": 0,
     }
 
     await db.users.insert_one(user_doc)
@@ -454,6 +489,10 @@ async def register_user(user_data: UserRegister):
         "full_name": user_data.fullName,
         "age": user_data.age,
         "student_level": user_data.studentLevel,
+        "xp": 0,
+        "level": 1,
+        "badges": [],
+        "streak": 0,
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -480,6 +519,10 @@ async def login_user(user_data: UserLogin):
         "full_name": user["full_name"],
         "age": user["age"],
         "student_level": user["student_level"],
+        "xp": user.get("xp", 0),
+        "level": user.get("level", 1),
+        "badges": user.get("badges", []),
+        "streak": user.get("streak", 0),
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -493,6 +536,10 @@ async def get_profile(current_user=Depends(get_current_user)):
         "full_name": current_user["full_name"],
         "age": current_user["age"],
         "student_level": current_user["student_level"],
+        "xp": current_user.get("xp", 0),
+        "level": current_user.get("level", 1),
+        "badges": current_user.get("badges", []),
+        "streak": current_user.get("streak", 0),
     }
 
 
@@ -524,6 +571,9 @@ async def submit_dass21(
 
     await db.assessments.insert_one(assessment_doc)
 
+    # Award XP for completing assessment
+    await award_xp(current_user["user_id"], 10)
+
     return results
 
 
@@ -550,6 +600,9 @@ async def submit_phq9(phq_data: PHQ9Response, current_user=Depends(get_current_u
     }
 
     await db.assessments.insert_one(assessment_doc)
+
+    # Award XP for completing assessment
+    await award_xp(current_user["user_id"], 10)
 
     return results
 
@@ -580,6 +633,10 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
         # Create new entry
         mood_doc["entry_id"] = str(uuid.uuid4())
         await db.mood_entries.insert_one(mood_doc)
+
+    # Award XP for daily mood entry and update streak
+    await award_xp(current_user["user_id"], 5)
+    await update_streak(current_user["user_id"])
 
     return {"message": "خلق و خو با موفقیت ذخیره شد"}
 
@@ -644,6 +701,17 @@ async def get_user_assessments(current_user=Depends(get_current_user)):
     )
 
     return assessments
+
+
+@app.get("/api/gamification")
+async def get_gamification(current_user=Depends(get_current_user)):
+    user = await db.users.find_one({"user_id": current_user["user_id"]})
+    return {
+        "xp": user.get("xp", 0),
+        "level": user.get("level", 1),
+        "badges": user.get("badges", []),
+        "streak": user.get("streak", 0),
+    }
 
 
 @app.get("/api/admin/export-data")

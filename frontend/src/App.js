@@ -55,6 +55,8 @@ const App = () => {
   // Mental health plan state
   const [userPlan, setUserPlan] = useState(null);
 
+  const [gamification, setGamification] = useState({ xp: 0, level: 1, badges: [], streak: 0 });
+
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
 
   useEffect(() => {
@@ -70,6 +72,7 @@ const App = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
+      setGamification({ xp: response.data.xp, level: response.data.level, badges: response.data.badges, streak: response.data.streak });
       setCurrentPage('dashboard');
       fetchUserData();
     } catch (error) {
@@ -107,6 +110,12 @@ const App = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAssessmentHistory(assessResponse.data);
+
+      // Fetch gamification data
+      const gamResponse = await axios.get(`${backendUrl}/api/gamification`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setGamification(gamResponse.data);
     } catch (error) {
       console.log('Error fetching user data:', error);
     }
@@ -124,9 +133,10 @@ const App = () => {
         : authData;
 
       const response = await axios.post(`${backendUrl}${endpoint}`, payload);
-      
+
       localStorage.setItem('token', response.data.access_token);
       setUser(response.data.user);
+      setGamification({ xp: response.data.user.xp, level: response.data.user.level, badges: response.data.user.badges, streak: response.data.user.streak });
       setCurrentPage('dashboard');
       fetchUserData();
     } catch (error) {
@@ -157,6 +167,7 @@ const App = () => {
     ]);
     setUserPlan(null);
     setAssessmentHistory([]);
+    setGamification({ xp: 0, level: 1, badges: [], streak: 0 });
   };
 
   const saveMoodEntry = async () => {
@@ -413,6 +424,15 @@ const App = () => {
           خروج
         </button>
         <h2 className="text-2xl font-bold text-right">خوش آمدید، {user?.full_name}</h2>
+      </div>
+
+      <div className="mb-6 text-right">
+        <p className="font-bold">سطح {gamification.level}</p>
+        <p className="text-sm">XP: {gamification.xp}</p>
+        <p className="text-sm">روزهای متوالی: {gamification.streak}</p>
+        {gamification.badges.length > 0 && (
+          <p className="text-sm">نشان‌ها: {gamification.badges.join(', ')}</p>
+        )}
       </div>
 
       {/* Today's mood status */}
