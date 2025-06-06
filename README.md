@@ -68,3 +68,14 @@ This project supports a master’s thesis titled:
 
 ## 🗂️ Project Structure
 
+## ⚙️ Configuration
+
+The backend requires a `SECRET_KEY` environment variable for JWT token
+generation. Create a `.env` file or set it in your deployment environment:
+
+```bash
+export SECRET_KEY="your-strong-secret-key"
+```
+
+Without this variable the server will fail to start.
+
