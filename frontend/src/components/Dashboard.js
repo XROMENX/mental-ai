@@ -37,6 +37,14 @@ const Dashboard = ({ handleLogout, user, gamification, todayMood, getMoodText, s
         <h3 className="text-xl font-bold text-right mb-2">ثبت خلق و خو روزانه</h3>
         <p className="text-right opacity-90">امروز چطور احساس می‌کنید؟</p>
       </div>
+      <div onClick={() => setCurrentPage('sleep-tracker')} className="bg-gradient-to-br from-teal-500 to-blue-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
+        <h3 className="text-xl font-bold text-right mb-2">پیگیری خواب</h3>
+        <p className="text-right opacity-90">ثبت مدت و کیفیت خواب</p>
+      </div>
+      <div onClick={() => setCurrentPage('daily-reflection')} className="bg-gradient-to-br from-yellow-500 to-orange-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
+        <h3 className="text-xl font-bold text-right mb-2">یادداشت روزانه</h3>
+        <p className="text-right opacity-90">نوشتن افکار و احساسات</p>
+      </div>
       <div onClick={() => setCurrentPage('chatbot')} className="bg-gradient-to-br from-orange-500 to-red-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg transition-shadow">
         <h3 className="text-xl font-bold text-right mb-2">گپ با مشاور</h3>
         <p className="text-right opacity-90">صحبت کردن می‌تواند کمک کند</p>

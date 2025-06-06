@@ -191,6 +191,53 @@ class PersianMentalHealthAPITester:
             print("✅ Mood entries retrieval successful")
         return success
 
+    def test_sleep_entry(self):
+        """Test saving sleep entry"""
+        sleep_data = {"hours": 7.5, "quality": 4, "note": "Good sleep"}
+        success, data = self.run_test(
+            "Save Sleep Entry", "POST", "api/sleep-entry", 200, data=sleep_data
+        )
+        if success:
+            assert "message" in data
+            print("✅ Sleep entry saved successfully")
+        return success
+
+    def test_get_sleep_entries(self):
+        """Test getting sleep entries"""
+        success, data = self.run_test(
+            "Get Sleep Entries", "GET", "api/sleep-entries", 200
+        )
+        if success:
+            assert isinstance(data, list)
+            if len(data) > 0:
+                assert "hours" in data[0]
+                assert "quality" in data[0]
+            print("✅ Sleep entries retrieval successful")
+        return success
+
+    def test_daily_reflection(self):
+        """Test saving daily reflection"""
+        ref = {"text": "Feeling productive"}
+        success, data = self.run_test(
+            "Save Daily Reflection", "POST", "api/daily-reflection", 200, data=ref
+        )
+        if success:
+            assert "message" in data
+            print("✅ Daily reflection saved successfully")
+        return success
+
+    def test_get_daily_reflections(self):
+        """Test getting reflections"""
+        success, data = self.run_test(
+            "Get Daily Reflections", "GET", "api/daily-reflections", 200
+        )
+        if success:
+            assert isinstance(data, list)
+            if len(data) > 0:
+                assert "text" in data[0]
+            print("✅ Daily reflections retrieval successful")
+        return success
+
     def test_chat_with_bot(self):
         """Test chatting with the bot"""
         # Test different types of messages
@@ -325,6 +372,10 @@ class PersianMentalHealthAPITester:
             self.test_submit_phq9()
             self.test_mood_entry()
             self.test_get_mood_entries()
+            self.test_sleep_entry()
+            self.test_get_sleep_entries()
+            self.test_daily_reflection()
+            self.test_get_daily_reflections()
             self.test_chat_with_bot()
             self.test_get_mental_health_plan()
             self.test_get_assessments()
