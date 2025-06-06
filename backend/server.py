@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-from .gamification_utils import calculate_level_and_badges, calculate_streak
-from .journeys_utils import get_default_journeys
+from .gamification_utils import calculate_level_and_badges  # type: ignore
+from .journeys_utils import get_default_journeys  # type: ignore
 
 import bcrypt
 import jwt
@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
 from pydantic import BaseModel, EmailStr
 
 load_dotenv()
@@ -37,7 +37,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
 # JWT settings
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY: str = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY environment variable is not set")
 ALGORITHM = "HS256"
@@ -104,7 +104,7 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_access_token(data: dict):
+def create_access_token(data: Dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -130,7 +130,6 @@ async def award_xp(user_id: str, amount: int):
     )
 
 
-
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
@@ -149,7 +148,7 @@ async def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
             )
         return user
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
