@@ -68,3 +68,6 @@ This project supports a master’s thesis titled:
 
 ## 🗂️ Project Structure
 
+## License
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International](LICENSE) license.
