@@ -1,4 +1,4 @@
-# 🇮🇷 Hami – AI-Powered Persian Mental Health App for Working Students
+# Hami – AI-Powered Persian Mental Health App for Working Students
 
 [![Status](https://img.shields.io/badge/status-in_development-yellow)]()  
 [![License](https://img.shields.io/badge/license-academic--research-blue)]()  
