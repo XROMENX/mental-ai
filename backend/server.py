@@ -78,6 +78,16 @@ class ChatMessage(BaseModel):
     message: str
 
 
+class SleepEntry(BaseModel):
+    hours: float
+    quality: int
+    note: Optional[str] = ""
+
+
+class DailyReflection(BaseModel):
+    text: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -107,6 +117,17 @@ async def award_xp(user_id: str, amount: int):
     if not user:
         return
     xp = user.get("xp", 0) + amount
+    level, badges = calculate_level_and_badges(xp)
+    current_badges = user.get("badges", [])
+    for badge in badges:
+        if badge not in current_badges:
+            current_badges.append(badge)
+
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"xp": xp, "level": level, "badges": current_badges}},
+    )
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -453,7 +474,6 @@ async def register_user(user_data: UserRegister):
         "xp": 0,
         "level": 1,
         "badges": [],
-
     }
 
     await db.users.insert_one(user_doc)
@@ -470,7 +490,6 @@ async def register_user(user_data: UserRegister):
         "xp": 0,
         "level": 1,
         "badges": [],
-
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -500,8 +519,6 @@ async def login_user(user_data: UserLogin):
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
         "badges": user.get("badges", []),
-
-
     }
 
     return {"access_token": access_token, "token_type": "bearer", "user": user_response}
@@ -518,7 +535,6 @@ async def get_profile(current_user=Depends(get_current_user)):
         "xp": current_user.get("xp", 0),
         "level": current_user.get("level", 1),
         "badges": current_user.get("badges", []),
-
     }
 
 
@@ -613,8 +629,6 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
         mood_doc["entry_id"] = str(uuid.uuid4())
         await db.mood_entries.insert_one(mood_doc)
 
-
-
     return {"message": "خلق و خو با موفقیت ذخیره شد"}
 
 
@@ -627,6 +641,79 @@ async def get_mood_entries(current_user=Depends(get_current_user)):
     )  # Last 30 entries
 
     return entries
+
+
+@app.post("/api/sleep-entry")
+async def save_sleep_entry(
+    sleep_data: SleepEntry, current_user=Depends(get_current_user)
+):
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    existing = await db.sleep_entries.find_one(
+        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
+    )
+
+    doc = {
+        "user_id": current_user["user_id"],
+        "hours": sleep_data.hours,
+        "quality": sleep_data.quality,
+        "note": sleep_data.note,
+        "date": datetime.utcnow(),
+    }
+
+    if existing:
+        await db.sleep_entries.update_one({"_id": existing["_id"]}, {"$set": doc})
+    else:
+        doc["entry_id"] = str(uuid.uuid4())
+        await db.sleep_entries.insert_one(doc)
+
+    await award_xp(current_user["user_id"], 5)
+    return {"message": "اطلاعات خواب ذخیره شد"}
+
+
+@app.get("/api/sleep-entries")
+async def get_sleep_entries(current_user=Depends(get_current_user)):
+    entries = (
+        await db.sleep_entries.find({"user_id": current_user["user_id"]}, {"_id": 0})
+        .sort("date", -1)
+        .to_list(length=30)
+    )
+    return entries
+
+
+@app.post("/api/daily-reflection")
+async def save_daily_reflection(
+    reflection: DailyReflection, current_user=Depends(get_current_user)
+):
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow = today + timedelta(days=1)
+    existing = await db.reflections.find_one(
+        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
+    )
+
+    doc = {
+        "user_id": current_user["user_id"],
+        "text": reflection.text,
+        "date": datetime.utcnow(),
+    }
+    if existing:
+        await db.reflections.update_one({"_id": existing["_id"]}, {"$set": doc})
+    else:
+        doc["entry_id"] = str(uuid.uuid4())
+        await db.reflections.insert_one(doc)
+
+    await award_xp(current_user["user_id"], 5)
+    return {"message": "یادداشت روزانه ذخیره شد"}
+
+
+@app.get("/api/daily-reflections")
+async def get_daily_reflections(current_user=Depends(get_current_user)):
+    reflections = (
+        await db.reflections.find({"user_id": current_user["user_id"]}, {"_id": 0})
+        .sort("date", -1)
+        .to_list(length=30)
+    )
+    return reflections
 
 
 @app.post("/api/chat")
@@ -687,7 +774,6 @@ async def get_gamification(current_user=Depends(get_current_user)):
         "xp": user.get("xp", 0),
         "level": user.get("level", 1),
         "badges": user.get("badges", []),
-
     }
 
 

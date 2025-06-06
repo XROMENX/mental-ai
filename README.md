@@ -29,6 +29,8 @@ This project supports a master’s thesis titled:
 - “How are you feeling today?” prompt
 - Emoji/scale-based logging + optional journaling
 - Used for AI pattern detection & roadmap planning
+- Sleep tracking for hours and quality
+- Daily reflections journal
 
 ### 🤖 AI Analysis
 - **NLP** on text input (journal/chat) using HuggingFace (e.g., ParsBERT)

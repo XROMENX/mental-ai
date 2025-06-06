@@ -33,6 +33,16 @@ const App = () => {
   const [moodHistory, setMoodHistory] = useState([]);
   const [assessmentHistory, setAssessmentHistory] = useState([]);
 
+  // Sleep tracker states
+  const [sleepHours, setSleepHours] = useState('');
+  const [sleepQuality, setSleepQuality] = useState(3);
+  const [sleepNote, setSleepNote] = useState('');
+  const [sleepHistory, setSleepHistory] = useState([]);
+
+  // Daily reflection states
+  const [reflectionText, setReflectionText] = useState('');
+  const [reflectionHistory, setReflectionHistory] = useState([]);
+
   // Chatbot states
   const [chatMessages, setChatMessages] = useState([
     { sender: 'bot', text: 'سلام! من دستیار سلامت روان شما هستم. امروز چطور احساس می‌کنید؟', time: new Date() }
@@ -88,7 +98,29 @@ const App = () => {
       );
       if (todayEntry) {
         setTodayMood(todayEntry.mood_level);
-        setMoodNote(todayEntry.note || '');
+      setMoodNote(todayEntry.note || '');
+    }
+
+      // Fetch sleep data
+      const sleepRes = await axios.get(`${backendUrl}/api/sleep-entries`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSleepHistory(sleepRes.data);
+      const todaySleep = sleepRes.data.find(e => e.date.split('T')[0] === today);
+      if (todaySleep) {
+        setSleepHours(String(todaySleep.hours));
+        setSleepQuality(todaySleep.quality);
+        setSleepNote(todaySleep.note || '');
+      }
+
+      // Fetch reflections
+      const reflRes = await axios.get(`${backendUrl}/api/daily-reflections`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setReflectionHistory(reflRes.data);
+      const todayRef = reflRes.data.find(e => e.date.split('T')[0] === today);
+      if (todayRef) {
+        setReflectionText(todayRef.text);
       }
 
       // Fetch mental health plan
@@ -154,6 +186,12 @@ const App = () => {
     // Reset all state
     setMoodHistory([]);
     setTodayMood(null);
+    setSleepHistory([]);
+    setSleepHours('');
+    setSleepQuality(3);
+    setSleepNote('');
+    setReflectionHistory([]);
+    setReflectionText('');
     setChatMessages([
       { sender: 'bot', text: 'سلام! من دستیار سلامت روان شما هستم. امروز چطور احساس می‌کنید؟', time: new Date() }
     ]);
@@ -178,6 +216,46 @@ const App = () => {
       setCurrentPage('dashboard');
     } catch (error) {
       setError('خطا در ذخیره خلق و خو');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveSleepEntry = async () => {
+    if (!sleepHours) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${backendUrl}/api/sleep-entry`, {
+        hours: parseFloat(sleepHours),
+        quality: sleepQuality,
+        note: sleepNote
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchUserData();
+      setCurrentPage('dashboard');
+    } catch (error) {
+      setError('خطا در ذخیره خواب');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveReflection = async () => {
+    if (!reflectionText.trim()) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${backendUrl}/api/daily-reflection`, {
+        text: reflectionText
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchUserData();
+      setCurrentPage('dashboard');
+    } catch (error) {
+      setError('خطا در ذخیره یادداشت');
     } finally {
       setLoading(false);
     }
@@ -409,6 +487,80 @@ const ConsentForm = () => (
       </div>
     );
   };
+
+  const SleepTracker = () => (
+    <div className="bg-white rounded-lg p-8 shadow-lg max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={() => setCurrentPage('dashboard')} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+          بازگشت
+        </button>
+        <h2 className="text-2xl font-bold text-right">پیگیری خواب</h2>
+      </div>
+      <div className="space-y-6">
+        <div>
+          <label className="block text-right mb-2 font-semibold">ساعت خواب</label>
+          <input type="number" step="0.1" value={sleepHours} onChange={e => setSleepHours(e.target.value)} className="w-full p-3 border rounded-lg text-right" />
+        </div>
+        <div>
+          <label className="block text-right mb-2 font-semibold">کیفیت خواب</label>
+          <select value={sleepQuality} onChange={e => setSleepQuality(parseInt(e.target.value))} className="w-full p-3 border rounded-lg text-right cursor-pointer">
+            {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-right mb-2 font-semibold">یادداشت</label>
+          <textarea value={sleepNote} onChange={e => setSleepNote(e.target.value)} rows="3" className="w-full p-3 border rounded-lg text-right resize-none" />
+        </div>
+        <button onClick={saveSleepEntry} disabled={!sleepHours || loading} className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+          {loading ? 'در حال ذخیره...' : 'ذخیره خواب'}
+        </button>
+
+        {sleepHistory.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-right mb-4">هفته اخیر</h3>
+            <div className="space-y-2">
+              {sleepHistory.slice(0,7).map((entry, idx) => (
+                <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <span className="text-sm text-gray-600">{new Date(entry.date).toLocaleDateString('fa-IR')}</span>
+                  <span className="text-sm">{entry.hours}h / {entry.quality}/5</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const DailyReflection = () => (
+    <div className="bg-white rounded-lg p-8 shadow-lg max-w-2xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={() => setCurrentPage('dashboard')} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+          بازگشت
+        </button>
+        <h2 className="text-2xl font-bold text-right">یادداشت روزانه</h2>
+      </div>
+      <div className="space-y-6">
+        <textarea value={reflectionText} onChange={e => setReflectionText(e.target.value)} rows="5" className="w-full p-3 border rounded-lg text-right resize-none" placeholder="تجربیات امروز..." />
+        <button onClick={saveReflection} disabled={!reflectionText.trim() || loading} className="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 disabled:opacity-50">
+          {loading ? 'در حال ذخیره...' : 'ذخیره یادداشت'}
+        </button>
+        {reflectionHistory.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-right mb-4">یادداشت‌های اخیر</h3>
+            <div className="space-y-2">
+              {reflectionHistory.slice(0,7).map((entry, idx) => (
+                <div key={idx} className="p-3 bg-gray-50 rounded">
+                  <p className="text-sm text-gray-600 mb-1 text-right">{new Date(entry.date).toLocaleDateString('fa-IR')}</p>
+                  <p className="text-right text-gray-800 text-sm">{entry.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   const Chatbot = () => (
     <div className="bg-white rounded-lg p-6 shadow-lg max-w-4xl mx-auto h-[600px] flex flex-col">
@@ -801,6 +953,8 @@ const ConsentForm = () => (
         {currentPage === 'dass21' && <DASS21Test />}
         {currentPage === 'phq9' && <PHQ9Test />}
         {currentPage === 'mood-tracker' && <MoodTracker />}
+        {currentPage === 'sleep-tracker' && <SleepTracker />}
+        {currentPage === 'daily-reflection' && <DailyReflection />}
         {currentPage === 'chatbot' && <Chatbot />}
         {currentPage === 'mental-health-plan' && <MentalHealthPlan />}
         {currentPage === 'history' && <History />}
