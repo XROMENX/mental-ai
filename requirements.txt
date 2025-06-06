@@ -31,4 +31,5 @@ typer>=0.14.0
 requests>=2.31.0
 gitpython>=3.1.44
 setuptools>=45
-wheel
+wheel>=0.43.0
+
