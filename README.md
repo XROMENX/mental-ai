@@ -21,7 +21,8 @@ This project supports a master’s thesis titled:
 
 ### 🧪 Mental Health Testing
 - Built-in **DASS-21** (validated Persian version)
-- Future support for **PHQ-9**, **GAD-7**, and more
+- Built-in **PHQ-9** assessment
+- Future support for **GAD-7** and more
 - Automatic scoring & risk level output
 
 ### 🔁 Daily Mood Logs
@@ -61,6 +62,6 @@ This project supports a master’s thesis titled:
 | Backend         | FastAPI (Python)                    |
 | AI/NLP Models   | HuggingFace ParsBERT, scikit-learn  |
 | Persian NLP     | Hazm, Parsivar                      |
-| DB              | PostgreSQL / Firebase               |
+| DB              | MongoDB                             |
 | Auth            | JWT / Firebase Auth (to be decided) |
 
