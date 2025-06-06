@@ -13,7 +13,10 @@ def calculate_level_and_badges(xp: int) -> Tuple[int, List[str]]:
     return level, badges
 
 
-def calculate_streak(last_entry: Optional[datetime], previous_streak: int) -> int:
+def calculate_streak(
+    last_entry: Optional[datetime],
+    previous_streak: int,
+) -> int:
     """Calculate new streak length based on last entry date."""
     today = datetime.utcnow().date()
     if last_entry is None:
