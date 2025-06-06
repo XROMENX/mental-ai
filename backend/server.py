@@ -36,9 +36,7 @@ client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
 
 # JWT settings
-SECRET_KEY: str = os.getenv("SECRET_KEY", "")
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY environment variable is not set")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -121,6 +119,7 @@ async def award_xp(user_id: str, amount: int):
     level, badges = calculate_level_and_badges(xp)
 
     )
+
 
 
 async def get_current_user(
