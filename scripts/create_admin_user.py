@@ -1,10 +1,16 @@
 import asyncio
 import os
+import sys
 import uuid
 from datetime import datetime
 
-from database import db
-from auth import hash_password
+current_dir = os.path.dirname(__file__)
+backend_path = os.path.join(current_dir, "..", "backend")
+sys.path.append(os.path.abspath(backend_path))
+
+from database import db  # noqa: E402
+from auth import hash_password  # noqa: E402
+
 
 DEFAULT_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
 DEFAULT_PASSWORD = os.getenv("ADMIN_PASSWORD", "123456")
