@@ -29,6 +29,8 @@ This file defines conventions for both main and testing agents working in this r
 - If the backend is not running on `http://localhost:8001`, update `base_url` in `backend_test.py` before running tests.
 
 ## Linting and Formatting
+- The repository uses an ESLint configuration file. Keep `eslint.config.js` in
+  the repository root to ensure consistent linting.
 - Format and lint Python code:
   ```bash
   black backend
@@ -38,6 +40,7 @@ This file defines conventions for both main and testing agents working in this r
 - Lint frontend code:
   ```bash
   cd frontend
+  # ESLint reads configuration from the root `eslint.config.js`
   npx eslint src --ext .js,.jsx
   ```
 
