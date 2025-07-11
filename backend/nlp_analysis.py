@@ -8,9 +8,7 @@ from transformers import pipeline
 @lru_cache(maxsize=1)
 def get_sentiment_pipeline():
     """Load a sentiment-analysis pipeline for Persian text."""
-    model_name = os.getenv(
-        "SENTIMENT_MODEL", "HooshvareLab/bert-base-parsbert-uncased-sentiment"
-    )
+    model_name = os.getenv("SENTIMENT_MODEL", "HooshvareLab/bert-base-parsbert-uncased-sentiment")
     return pipeline("sentiment-analysis", model=model_name)
 
 

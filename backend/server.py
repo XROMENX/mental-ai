@@ -4,6 +4,10 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+from gamification_utils import calculate_level_and_badges
+from journeys_utils import get_default_journeys
+from nlp_analysis import analyze_mental_state
+
 
 import bcrypt
 import jwt
@@ -38,6 +42,7 @@ db = client[DB_NAME]
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY", "changeme")
 
 security = HTTPBearer()
 
@@ -121,8 +126,11 @@ async def award_xp(user_id: str, amount: int):
     xp = user.get("xp", 0) + amount
     level, badges = calculate_level_and_badges(xp)
 
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"xp": xp, "level": level, "badges": badges}},
     )
-
+    return {"xp": xp, "level": level, "badges": badges}
 
 
 async def get_current_user(
@@ -139,9 +147,7 @@ async def get_current_user(
             )
         user = await db.users.find_one({"user_id": user_id})
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
         return user
     except jwt.PyJWTError:
         raise HTTPException(
@@ -214,9 +220,7 @@ def calculate_dass_scores(responses: Dict[int, int]) -> Dict[str, Any]:
     )
 
     # Generate recommendations
-    recommendations = generate_recommendations(
-        depression_level, anxiety_level, stress_level
-    )
+    recommendations = generate_recommendations(depression_level, anxiety_level, stress_level)
 
     return {
         "depression_score": depression_score,
@@ -261,17 +265,12 @@ def calculate_phq9_score(responses: Dict[int, int]) -> Dict[str, Any]:
     }
 
 
-def generate_ai_analysis(
-    dep_score, anx_score, stress_score, dep_level, anx_level, stress_level
-):
+def generate_ai_analysis(dep_score, anx_score, stress_score, dep_level, anx_level, stress_level):
     analysis = "بر اساس تجزیه و تحلیل پاسخ‌های شما: "
 
     if dep_level == "عادی" and anx_level == "عادی" and stress_level == "عادی":
         analysis += "نتایج شما در محدوده طبیعی قرار دارد. شما وضعیت روحی مناسبی دارید."
-    elif any(
-        level in ["شدید", "بسیار شدید"]
-        for level in [dep_level, anx_level, stress_level]
-    ):
+    elif any(level in ["شدید", "بسیار شدید"] for level in [dep_level, anx_level, stress_level]):
         analysis += "نتایج نشان می‌دهد که شما در حال حاضر با چالش‌های قابل توجه سلامت روان مواجه هستید. توصیه می‌شود با یک متخصص مشورت کنید."
     else:
         analysis += "نتایج نشان می‌دهد که شما نیاز به توجه بیشتر به سلامت روان خود دارید. با اعمال تکنیک‌های مدیریت استرس می‌توانید بهبود یابید."
@@ -285,9 +284,7 @@ def generate_phq9_analysis(total_score, severity_level):
     elif severity_level == "خفیف":
         return "علائم افسردگی خفیفی دارید. با تکنیک‌های خودمراقبتی می‌توانید این وضعیت را بهبود بخشید."
     elif severity_level == "متوسط":
-        return (
-            "علائم افسردگی متوسطی دارید. توصیه می‌شود با یک مشاور یا روان‌شناس صحبت کنید."
-        )
+        return "علائم افسردگی متوسطی دارید. توصیه می‌شود با یک مشاور یا روان‌شناس صحبت کنید."
     elif severity_level == "نسبتاً شدید":
         return "علائم افسردگی نسبتاً شدیدی دارید. مراجعه به متخصص ضروری است."
     else:
@@ -360,9 +357,7 @@ def generate_phq9_recommendations(severity_level):
         ]
 
 
-def generate_chat_response(
-    message: str, memory: Optional[Dict[str, Any]] = None
-) -> str:
+def generate_chat_response(message: str, memory: Optional[Dict[str, Any]] = None) -> str:
     """Simple rule-based chatbot for Persian mental health support"""
     message_lower = message.lower()
     nickname = None
@@ -406,9 +401,7 @@ def generate_chat_response(
         return random.choice(responses)
 
     # Study/work stress
-    elif any(
-        word in message_lower for word in ["درس", "امتحان", "کار", "دانشگاه", "مطالعه"]
-    ):
+    elif any(word in message_lower for word in ["درس", "امتحان", "کار", "دانشگاه", "مطالعه"]):
         responses = [
             "فشار تحصیلی و کاری چالش بزرگی است. مهم این است که تعادل داشته باشید. برنامه‌ریزی و استراحت منظم کمک می‌کند.",
             "درک می‌کنم که فشار درسی سنگین است. آیا زمان کافی برای استراحت و تفریح در نظر گرفته‌اید؟",
@@ -455,9 +448,7 @@ async def register_user(user_data: UserRegister):
     # Check if user exists
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
-        raise HTTPException(
-            status_code=400, detail="کاربری با این ایمیل قبلاً ثبت‌نام کرده است"
-        )
+        raise HTTPException(status_code=400, detail="کاربری با این ایمیل قبلاً ثبت‌نام کرده است")
 
     # Create user
     user_id = str(uuid.uuid4())
@@ -477,7 +468,6 @@ async def register_user(user_data: UserRegister):
         "level": 1,
         "memory": {},
         "badges": [],
-
     }
 
     await db.users.insert_one(user_doc)
@@ -508,9 +498,7 @@ async def login_user(user_data: UserLogin):
         raise HTTPException(status_code=400, detail="ایمیل یا رمز عبور اشتباه است")
 
     # Update last login
-    await db.users.update_one(
-        {"user_id": user["user_id"]}, {"$set": {"last_login": datetime.utcnow()}}
-    )
+    await db.users.update_one({"user_id": user["user_id"]}, {"$set": {"last_login": datetime.utcnow()}})
 
     # Create access token
     access_token = create_access_token(data={"sub": user["user_id"]})
@@ -546,14 +534,10 @@ async def get_profile(current_user=Depends(get_current_user)):
 
 
 @app.post("/api/submit-dass21")
-async def submit_dass21(
-    dass_data: DASS21Response, current_user=Depends(get_current_user)
-):
+async def submit_dass21(dass_data: DASS21Response, current_user=Depends(get_current_user)):
     # Validate responses
     if len(dass_data.responses) != 21:
-        raise HTTPException(
-            status_code=400, detail="باید به تمام 21 سوال پاسخ داده شود"
-        )
+        raise HTTPException(status_code=400, detail="باید به تمام 21 سوال پاسخ داده شود")
 
     # Calculate scores
     results = calculate_dass_scores(dass_data.responses)
@@ -615,9 +599,7 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
 
-    existing_entry = await db.mood_entries.find_one(
-        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
-    )
+    existing_entry = await db.mood_entries.find_one({"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}})
 
     mood_doc = {
         "user_id": current_user["user_id"],
@@ -629,9 +611,7 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
 
     if existing_entry:
         # Update existing entry
-        await db.mood_entries.update_one(
-            {"_id": existing_entry["_id"]}, {"$set": mood_doc}
-        )
+        await db.mood_entries.update_one({"_id": existing_entry["_id"]}, {"$set": mood_doc})
     else:
         # Create new entry
         mood_doc["entry_id"] = str(uuid.uuid4())
@@ -642,24 +622,16 @@ async def save_mood_entry(mood_data: MoodEntry, current_user=Depends(get_current
 
 @app.get("/api/mood-entries")
 async def get_mood_entries(current_user=Depends(get_current_user)):
-    entries = (
-        await db.mood_entries.find({"user_id": current_user["user_id"]}, {"_id": 0})
-        .sort("date", -1)
-        .to_list(length=30)
-    )  # Last 30 entries
+    entries = await db.mood_entries.find({"user_id": current_user["user_id"]}, {"_id": 0}).sort("date", -1).to_list(length=30)  # Last 30 entries
 
     return entries
 
 
 @app.post("/api/sleep-entry")
-async def save_sleep_entry(
-    sleep_data: SleepEntry, current_user=Depends(get_current_user)
-):
+async def save_sleep_entry(sleep_data: SleepEntry, current_user=Depends(get_current_user)):
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
-    existing = await db.sleep_entries.find_one(
-        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
-    )
+    existing = await db.sleep_entries.find_one({"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}})
 
     doc = {
         "user_id": current_user["user_id"],
@@ -681,23 +653,15 @@ async def save_sleep_entry(
 
 @app.get("/api/sleep-entries")
 async def get_sleep_entries(current_user=Depends(get_current_user)):
-    entries = (
-        await db.sleep_entries.find({"user_id": current_user["user_id"]}, {"_id": 0})
-        .sort("date", -1)
-        .to_list(length=30)
-    )
+    entries = await db.sleep_entries.find({"user_id": current_user["user_id"]}, {"_id": 0}).sort("date", -1).to_list(length=30)
     return entries
 
 
 @app.post("/api/daily-reflection")
-async def save_daily_reflection(
-    reflection: DailyReflection, current_user=Depends(get_current_user)
-):
+async def save_daily_reflection(reflection: DailyReflection, current_user=Depends(get_current_user)):
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow = today + timedelta(days=1)
-    existing = await db.reflections.find_one(
-        {"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}}
-    )
+    existing = await db.reflections.find_one({"user_id": current_user["user_id"], "date": {"$gte": today, "$lt": tomorrow}})
 
     doc = {
         "user_id": current_user["user_id"],
@@ -716,11 +680,7 @@ async def save_daily_reflection(
 
 @app.get("/api/daily-reflections")
 async def get_daily_reflections(current_user=Depends(get_current_user)):
-    reflections = (
-        await db.reflections.find({"user_id": current_user["user_id"]}, {"_id": 0})
-        .sort("date", -1)
-        .to_list(length=30)
-    )
+    reflections = await db.reflections.find({"user_id": current_user["user_id"]}, {"_id": 0}).sort("date", -1).to_list(length=30)
     return reflections
 
 
@@ -773,11 +733,7 @@ async def get_journeys(_: Any = Depends(get_current_user)):
 
 @app.get("/api/assessments")
 async def get_user_assessments(current_user=Depends(get_current_user)):
-    assessments = (
-        await db.assessments.find({"user_id": current_user["user_id"]}, {"_id": 0})
-        .sort("completed_at", -1)
-        .to_list(length=10)
-    )
+    assessments = await db.assessments.find({"user_id": current_user["user_id"]}, {"_id": 0}).sort("completed_at", -1).to_list(length=10)
 
     return assessments
 
@@ -803,18 +759,14 @@ async def update_memory(update: MemoryUpdate, current_user=Depends(get_current_u
     """Update user memory with provided key/value pairs."""
     memory = current_user.get("memory", {})
     memory.update(update.memory)
-    await db.users.update_one(
-        {"user_id": current_user["user_id"]}, {"$set": {"memory": memory}}
-    )
+    await db.users.update_one({"user_id": current_user["user_id"]}, {"$set": {"memory": memory}})
     return {"memory": memory}
 
 
 @app.get("/api/admin/export-data")
 async def export_research_data():
     # This would be protected by admin authentication in production
-    assessments = await db.assessments.find(
-        {}, {"_id": 0, "user_id": 0, "assessment_id": 0}  # Remove personal identifiers
-    ).to_list(length=None)
+    assessments = await db.assessments.find({}, {"_id": 0, "user_id": 0, "assessment_id": 0}).to_list(length=None)  # Remove personal identifiers
 
     return {"data": assessments, "count": len(assessments)}
 

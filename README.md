@@ -68,3 +68,38 @@ This project supports a master’s thesis titled:
 | DB              | MongoDB                             |
 | Auth            | JWT / Firebase Auth (to be decided) |
 
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+
+
+### Backend
+
+```bash
+pip install -r backend/requirements.txt
+cd backend
+uvicorn server:app --reload --host 0.0.0.0 --port 8001
+```
+
+### Frontend
+
+```bash
+cd frontend
+yarn install
+yarn start
+```
+
+### Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+### Running Tests
+
+```bash
+pytest --cov=backend tests
+```
