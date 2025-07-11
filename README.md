@@ -118,6 +118,12 @@ In another terminal, run the integration tests:
 python backend_test.py
 ```
 
+Alternatively, run the helper script to start the server, run the tests and stop the server:
+
+```bash
+bash scripts/run_backend_tests.sh
+```
+
 If your server is running on a different host or port, set the
 `API_BASE_URL` environment variable before running the tests:
 
