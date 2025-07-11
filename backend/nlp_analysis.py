@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Dict
+from typing import TypedDict
 
 from transformers import pipeline
 
@@ -8,13 +8,16 @@ from transformers import pipeline
 @lru_cache(maxsize=1)
 def get_sentiment_pipeline():
     """Load a sentiment-analysis pipeline for Persian text."""
-    model_name = os.getenv(
-        "SENTIMENT_MODEL", "HooshvareLab/bert-base-parsbert-uncased-sentiment"
-    )
+    model_name = os.getenv("SENTIMENT_MODEL", "HooshvareLab/bert-base-parsbert-uncased-sentiment")
     return pipeline("sentiment-analysis", model=model_name)
 
 
-def analyze_mental_state(text: str) -> Dict[str, float]:
+class SentimentResult(TypedDict):
+    label: str
+    score: float
+
+
+def analyze_mental_state(text: str) -> SentimentResult:
     """Return sentiment scores for the given text."""
     if not text:
         return {"label": "neutral", "score": 0.0}
