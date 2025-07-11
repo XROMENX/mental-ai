@@ -100,6 +100,28 @@ docker-compose up --build
 
 ### Running Tests
 
+Start the FastAPI server in one terminal:
+
+```bash
+cd backend
+uvicorn server:app --reload --host 0.0.0.0 --port 8001
+```
+
+In another terminal, run the integration tests:
+
+```bash
+python backend_test.py
+```
+
+If your server is running on a different host or port, set the
+`API_BASE_URL` environment variable before running the tests:
+
+```bash
+API_BASE_URL=http://your-host:port python backend_test.py
+```
+
+Unit tests can still be executed directly with:
+
 ```bash
 pytest --cov=backend tests
 ```
