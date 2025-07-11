@@ -59,7 +59,8 @@ const App = () => {
 
 
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+  const backendUrl =
+    process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -152,9 +153,18 @@ const App = () => {
 
     try {
       const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
-      const payload = authMode === 'login' 
-        ? { email: authData.email, password: authData.password }
-        : authData;
+      let payload;
+      if (authMode === 'login') {
+        payload = { email: authData.email, password: authData.password };
+      } else {
+        const ageNum = Number(authData.age);
+        if (!ageNum || ageNum < 10 || ageNum > 100) {
+          setError('سن باید بین 10 و 100 باشد');
+          setLoading(false);
+          return;
+        }
+        payload = { ...authData, age: ageNum };
+      }
 
       const response = await axios.post(`${backendUrl}${endpoint}`, payload);
 
@@ -946,11 +956,39 @@ const ConsentForm = () => (
         {currentPage === 'auth' && (
           <div className="space-y-8">
             {authMode === 'register' && <ConsentForm />}
-            <AuthForm />
+            <AuthForm
+              authMode={authMode}
+              setAuthMode={setAuthMode}
+              authData={authData}
+              setAuthData={setAuthData}
+              handleAuth={handleAuth}
+              loading={loading}
+              error={error}
+            />
           </div>
         )}
-        {currentPage === 'dashboard' && <Dashboard />}
-        {currentPage === 'dass21' && <DASS21Test />}
+        {currentPage === 'dashboard' && (
+          <Dashboard
+            handleLogout={handleLogout}
+            user={user}
+            gamification={gamification}
+            todayMood={todayMood}
+            getMoodText={getMoodText}
+            setCurrentPage={setCurrentPage}
+            moodHistory={moodHistory}
+            assessmentHistory={assessmentHistory}
+          />
+        )}
+        {currentPage === 'dass21' && (
+          <DASS21Test
+            setCurrentPage={setCurrentPage}
+            dass21Questions={dass21Questions}
+            dassResponses={dassResponses}
+            setDassResponses={setDassResponses}
+            submitDASS21={submitDASS21}
+            loading={loading}
+          />
+        )}
         {currentPage === 'phq9' && <PHQ9Test />}
         {currentPage === 'mood-tracker' && <MoodTracker />}
         {currentPage === 'sleep-tracker' && <SleepTracker />}
