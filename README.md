@@ -125,3 +125,13 @@ Unit tests can still be executed directly with:
 ```bash
 pytest --cov=backend tests
 ```
+
+### Create Admin User (Optional)
+
+For local testing you may want a predefined admin account. Run the helper script:
+
+```bash
+python scripts/create_admin_user.py
+```
+
+You can override the defaults using `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables.
