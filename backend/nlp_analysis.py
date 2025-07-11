@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Dict
+from typing import TypedDict
 
 from transformers import pipeline
 
@@ -12,7 +12,12 @@ def get_sentiment_pipeline():
     return pipeline("sentiment-analysis", model=model_name)
 
 
-def analyze_mental_state(text: str) -> Dict[str, float]:
+class SentimentResult(TypedDict):
+    label: str
+    score: float
+
+
+def analyze_mental_state(text: str) -> SentimentResult:
     """Return sentiment scores for the given text."""
     if not text:
         return {"label": "neutral", "score": 0.0}
