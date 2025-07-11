@@ -20,6 +20,8 @@ const AuthForm = ({ authMode, setAuthMode, authData, setAuthData, handleAuth, lo
             type="number"
             placeholder="سن"
             value={authData.age}
+            min="10"
+            max="100"
             onChange={e => setAuthData({ ...authData, age: e.target.value })}
             className="w-full p-3 border rounded-lg text-right"
             required
