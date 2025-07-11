@@ -79,7 +79,7 @@ This project supports a master’s thesis titled:
 ### Backend
 
 ```bash
-pip install -r backend/requirements.txt
+pip install -r requirements.txt
 cd backend
 uvicorn server:app --reload --host 0.0.0.0 --port 8001
 ```
