@@ -11,6 +11,7 @@ sys.path.append(os.path.abspath(backend_path))
 from database import db  # noqa: E402
 from auth import hash_password  # noqa: E402
 
+
 DEFAULT_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
 DEFAULT_PASSWORD = os.getenv("ADMIN_PASSWORD", "123456")
 
