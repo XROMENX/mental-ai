@@ -76,6 +76,11 @@ This project supports a master’s thesis titled:
 - Python 3.11+
 - Node.js 20+
 
+### Environment Variables
+
+Copy `.env.example` to `.env` and set a strong `SECRET_KEY`. The backend will
+raise an error if this variable is missing.
+
 ### Backend
 
 ```bash
