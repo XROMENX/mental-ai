@@ -109,6 +109,30 @@ Run all services together:
 docker-compose up --build
 ```
 
+### Kubernetes Deployment
+
+Sample manifests are provided in `k8s/microservices.yaml` for running the
+backend microservices on a Kubernetes cluster.
+
+Build and push the backend image:
+
+```bash
+docker build -t mental-ai-backend .
+```
+
+Apply the resources:
+
+```bash
+kubectl apply -f k8s/microservices.yaml
+kubectl apply -f k8s/api-gateway.yaml
+```
+
+The gateway exposes all services on a single endpoint. Reach each service
+through the gateway at `http://<gateway-host>:8080/api/<service>/`. For example,
+the auth service's Swagger UI is available at
+`http://localhost:8080/api/auth/docs` and its OpenAPI schema at
+`http://localhost:8080/api/auth/openapi.json`.
+
 ### Running Tests
 
 Start the required FastAPI service in one terminal:
