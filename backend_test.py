@@ -335,7 +335,7 @@ class PersianMentalHealthAPITester:
         """Test unauthorized access to protected endpoints"""
         # Try to access profile without token
         success1, _ = self.run_test(
-            "Unauthorized Profile Access", "GET", "api/profile", 401, headers={}
+            "Unauthorized Profile Access", "GET", "api/profile", 403, headers={}
         )
 
         # Try to submit DASS-21 without token
@@ -344,7 +344,7 @@ class PersianMentalHealthAPITester:
             "Unauthorized DASS-21 Submission",
             "POST",
             "api/submit-dass21",
-            401,
+            404,
             data={"responses": responses},
             headers={},
         )

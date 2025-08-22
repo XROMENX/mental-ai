@@ -160,3 +160,5 @@ agent_communication:
     message: "Added chart features and ran tests."
   - agent: "main"
     message: "Attempted dashboard retest; environment missing dependencies prevented full execution."
+  - agent: "main"
+    message: "Ran linters; backend tests failed to complete during registration."
