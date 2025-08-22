@@ -124,10 +124,19 @@ Apply the resources:
 
 ```bash
 kubectl apply -f k8s/microservices.yaml
+kubectl apply -f k8s/api-gateway.yaml
+```
+
+The gateway exposes all services on a single endpoint. Reach each service
+through the gateway at `http://<gateway-host>:8080/api/<service>/`. For example,
+the auth service's Swagger UI is available at
+`http://localhost:8080/api/auth/docs` and its OpenAPI schema at
+`http://localhost:8080/api/auth/openapi.json`.
 ```
 
 Each service exposes its own Swagger UI at `/docs` and the OpenAPI schema at
 `/openapi.json`.
+
 
 ### Running Tests
 
