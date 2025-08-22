@@ -83,10 +83,14 @@ raise an error if this variable is missing.
 
 ### Backend
 
+Each API domain now runs as its own FastAPI service. Start the ones you need:
+
 ```bash
 pip install -r requirements.txt
 cd backend
-uvicorn server:app --reload --host 0.0.0.0 --port 8001
+uvicorn services.auth_service:app --reload --port 8001
+uvicorn services.assessments_service:app --reload --port 8002
+uvicorn services.trackers_service:app --reload --port 8003
 ```
 
 ### Frontend
@@ -99,17 +103,19 @@ yarn start
 
 ### Docker Compose
 
+Run all services together:
+
 ```bash
 docker-compose up --build
 ```
 
 ### Running Tests
 
-Start the FastAPI server in one terminal:
+Start the required FastAPI service in one terminal:
 
 ```bash
 cd backend
-uvicorn server:app --reload --host 0.0.0.0 --port 8001
+uvicorn services.auth_service:app --reload --port 8001
 ```
 
 In another terminal, run the integration tests:

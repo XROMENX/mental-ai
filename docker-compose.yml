@@ -1,15 +1,20 @@
 version: '3.9'
 services:
-  app:
+  auth-service:
     build: .
+    working_dir: /backend
+    command: uvicorn services.auth_service:app --host 0.0.0.0 --port 8001
     ports:
-      - "3000:8080"
       - "8001:8001"
-    environment:
-      - FRONTEND_ENV=
-      - SECRET_KEY=changeme
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  assessments-service:
+    build: .
+    working_dir: /backend
+    command: uvicorn services.assessments_service:app --host 0.0.0.0 --port 8002
+    ports:
+      - "8002:8002"
+  trackers-service:
+    build: .
+    working_dir: /backend
+    command: uvicorn services.trackers_service:app --host 0.0.0.0 --port 8003
+    ports:
+      - "8003:8003"
