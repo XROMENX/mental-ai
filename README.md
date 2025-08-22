@@ -132,6 +132,11 @@ through the gateway at `http://<gateway-host>:8080/api/<service>/`. For example,
 the auth service's Swagger UI is available at
 `http://localhost:8080/api/auth/docs` and its OpenAPI schema at
 `http://localhost:8080/api/auth/openapi.json`.
+```
+
+Each service exposes its own Swagger UI at `/docs` and the OpenAPI schema at
+`/openapi.json`.
+
 
 ### Running Tests
 
