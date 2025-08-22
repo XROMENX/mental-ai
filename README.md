@@ -109,6 +109,26 @@ Run all services together:
 docker-compose up --build
 ```
 
+### Kubernetes Deployment
+
+Sample manifests are provided in `k8s/microservices.yaml` for running the
+backend microservices on a Kubernetes cluster.
+
+Build and push the backend image:
+
+```bash
+docker build -t mental-ai-backend .
+```
+
+Apply the resources:
+
+```bash
+kubectl apply -f k8s/microservices.yaml
+```
+
+Each service exposes its own Swagger UI at `/docs` and the OpenAPI schema at
+`/openapi.json`.
+
 ### Running Tests
 
 Start the required FastAPI service in one terminal:

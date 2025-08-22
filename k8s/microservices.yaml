@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: mental-ai-backend:latest
+        command: ["uvicorn", "services.auth_service:app", "--host", "0.0.0.0", "--port", "8001"]
+        ports:
+        - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assessments-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: assessments-service
+  template:
+    metadata:
+      labels:
+        app: assessments-service
+    spec:
+      containers:
+      - name: assessments-service
+        image: mental-ai-backend:latest
+        command: ["uvicorn", "services.assessments_service:app", "--host", "0.0.0.0", "--port", "8002"]
+        ports:
+        - containerPort: 8002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: assessments-service
+spec:
+  selector:
+    app: assessments-service
+  ports:
+  - port: 8002
+    targetPort: 8002
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trackers-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trackers-service
+  template:
+    metadata:
+      labels:
+        app: trackers-service
+    spec:
+      containers:
+      - name: trackers-service
+        image: mental-ai-backend:latest
+        command: ["uvicorn", "services.trackers_service:app", "--host", "0.0.0.0", "--port", "8003"]
+        ports:
+        - containerPort: 8003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trackers-service
+spec:
+  selector:
+    app: trackers-service
+  ports:
+  - port: 8003
+    targetPort: 8003
+    protocol: TCP
