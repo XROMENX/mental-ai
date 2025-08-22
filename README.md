@@ -83,11 +83,12 @@ raise an error if this variable is missing.
 
 ### Backend
 
-Each API domain now runs as its own FastAPI service. Start the ones you need:
+Each API domain now runs as its own FastAPI service, including a dedicated IDP service for issuing JWTs. Start the ones you need:
 
 ```bash
 pip install -r requirements.txt
 cd backend
+uvicorn services.idp_service:app --reload --port 8000  # IDP service issuing JWTs
 uvicorn services.auth_service:app --reload --port 8001
 uvicorn services.assessments_service:app --reload --port 8002
 uvicorn services.trackers_service:app --reload --port 8003
@@ -135,6 +136,7 @@ Start the required FastAPI service in one terminal:
 
 ```bash
 cd backend
+uvicorn services.idp_service:app --reload --port 8000  # IDP service issuing JWTs
 uvicorn services.auth_service:app --reload --port 8001
 ```
 
