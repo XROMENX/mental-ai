@@ -75,6 +75,14 @@ class PersianMentalHealthAPITester:
             print("✅ Health check endpoint is working")
         return success
 
+    def test_openapi_schema(self):
+        """Ensure the OpenAPI schema is exposed for Swagger"""
+        success, data = self.run_test("OpenAPI Schema", "GET", "openapi.json", 200)
+        if success:
+            assert "openapi" in data
+            print("✅ Swagger/OpenAPI documentation available")
+        return success
+
     def test_register_user(self):
         """Test user registration"""
         success, data = self.run_test(
@@ -361,6 +369,7 @@ class PersianMentalHealthAPITester:
 
         # Run tests in order
         self.test_health_check()
+        self.test_openapi_schema()
 
         # Registration and authentication flow
         if self.test_register_user():
